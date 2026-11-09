@@ -1,0 +1,60 @@
+---
+// One window for every live demo: any button with data-demo="<url>" opens it here. The demo is
+// only loaded when the visitor asks for it (it runs on another website).
+import Icon from './Icon.astro';
+---
+<dialog class="demo" data-demo-dialog aria-labelledby="demo-title">
+  <div class="demo__bar">
+    <span class="demo__live"><i></i> Live demo</span>
+    <h2 id="demo-title" class="demo__title" data-demo-title>Demo</h2>
+    <a class="demo__open" data-demo-open href="#" target="_blank" rel="noopener"><Icon name="external" size={18} /><span>Open full screen</span></a>
+    <button type="button" class="demo__close" data-demo-close aria-label="Close the demo"><Icon name="close" /></button>
+  </div>
+  <div class="demo__frame">
+    <div class="demo__loading" aria-hidden="true"><span></span>Loading the twin…</div>
+    <iframe data-demo-frame title="Live demo" loading="lazy" allow="fullscreen; xr-spatial-tracking" referrerpolicy="no-referrer"></iframe>
+  </div>
+  <p class="demo__note">This prototype runs on its own website. Nothing you do here is stored by twinlink.eu.</p>
+</dialog>
+
+<style>
+  .demo { width: min(78rem, calc(100vw - 2rem)); height: min(52rem, calc(100dvh - 2rem)); padding: 0; border: 0; border-radius: 1.25rem; background: var(--color-surface); box-shadow: 0 40px 120px -30px rgb(7 26 58 / 0.55); overflow: hidden; }
+  .demo[open] { display: grid; grid-template-rows: auto 1fr auto; animation: demo-in 380ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .demo::backdrop { background: rgb(7 26 58 / 0.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  @keyframes demo-in { from { opacity: 0; transform: translateY(16px) scale(0.98); } }
+  .demo__bar { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.75rem 0.75rem 1.25rem; border-bottom: 1px solid var(--color-line); }
+  .demo__live { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #08744a; }
+  .demo__live i { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-green) 25%, transparent); }
+  .demo__title { flex: 1; min-width: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .demo__open { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; font-weight: 600; color: var(--color-navy); text-decoration: none; }
+  @media (max-width: 40rem) { .demo__open span { display: none; } }
+  .demo__close { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-ink); cursor: pointer; }
+  .demo__frame { position: relative; background: #0b1f3a; }
+  .demo__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .demo__loading { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 0.75rem; color: #cfe0f5; font-weight: 600; }
+  .demo__loading span { width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 3px solid rgb(255 255 255 / 0.2); border-top-color: var(--color-green-bright); animation: demo-spin 900ms linear infinite; }
+  @keyframes demo-spin { to { transform: rotate(360deg); } }
+  .demo__note { padding: 0.5rem 1.25rem; font-size: 0.8125rem; color: var(--color-muted); border-top: 1px solid var(--color-line); }
+</style>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('[data-demo-dialog]')!;
+  const frame = dialog.querySelector<HTMLIFrameElement>('[data-demo-frame]')!;
+  const title = dialog.querySelector<HTMLElement>('[data-demo-title]')!;
+  const open = dialog.querySelector<HTMLAnchorElement>('[data-demo-open]')!;
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-demo]');
+    if (!btn) return;
+    e.preventDefault();
+    const url = btn.dataset.demo!;
+    title.textContent = btn.dataset.demoTitle ?? 'Live demo';
+    open.href = url;
+    frame.title = btn.dataset.demoTitle ?? 'Live demo';
+    frame.src = url;
+    dialog.showModal();
+  });
+  const close = () => { dialog.close(); };
+  dialog.querySelector('[data-demo-close]')!.addEventListener('click', close);
+  dialog.addEventListener('close', () => { frame.src = 'about:blank'; });
+  dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
+</script>

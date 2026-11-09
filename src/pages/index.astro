@@ -1,0 +1,296 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import ItemCard from '../components/ItemCard.astro';
+import LinkMap from '../components/LinkMap.astro';
+import Search from '../components/Search.astro';
+import { home as h } from '../content/site';
+import { byTheme, byType, themes, types } from '../content/catalog';
+import { Image } from 'astro:assets';
+// Real screenshots of the live demos (src/assets/demos/).
+const shots = import.meta.glob<{ default: ImageMetadata }>('../assets/demos/*.png', { eager: true });
+const shotFor = (name?: string) => name ? Object.entries(shots).find(([p]) => p.endsWith(`/${name}.png`))?.[1].default : undefined;
+const demos = byType('twin');
+---
+<Base title={h.seo.title} description={h.seo.description}>
+  <!-- Hero: the promise, a search, and the link map of everything on the site. -->
+  <section class="hero">
+    <div class="container-site hero__grid">
+      <div class="hero__text">
+        <p class="eyebrow">{h.hero.eyebrow}</p>
+        <h1 class="hero__title">{h.hero.headline}</h1>
+        <p class="lede mt-5">{h.hero.body}</p>
+        <Search label={h.hero.searchLabel} placeholder={h.hero.searchPlaceholder} />
+        <div class="hero__actions">
+          <a href={h.hero.primary.href} class="btn btn--green"><Icon name="play" size={18} />{h.hero.primary.label}</a>
+          <a href={h.hero.secondary.href} class="btn btn--ghost">{h.hero.secondary.label}</a>
+        </div>
+      </div>
+      <div class="hero__map">
+        <p class="hero__map-label"><span></span>{h.map.label}</p>
+        <LinkMap />
+      </div>
+    </div>
+  </section>
+
+  <!-- Try it now: the live demos open in a window on the page. -->
+  <section id="try" class="section try">
+    <div class="container-site">
+      <div class="head" data-reveal>
+        <p class="eyebrow">{h.try.eyebrow}</p>
+        <h2>{h.try.headline}</h2>
+        <p class="lede mt-3">{h.try.body}</p>
+      </div>
+      <div class="try__grid">
+        {demos.map((d, i) => (
+          <article class="tcard" data-reveal>
+            <button type="button" class={`tcard__screen tcard__screen--${i}`} data-demo={d.demo} data-demo-title={d.title} aria-label={`Try ${d.title}`}>
+              {shotFor(d.preview) && <Image src={shotFor(d.preview)!} alt="" widths={[480, 800, 1200]} sizes="(min-width: 48rem) 33vw, 100vw" class="tcard__shot" loading="lazy" />}
+              <span class="tcard__sweep" aria-hidden="true"></span>
+              <span class="tcard__live" aria-hidden="true"><i></i>Live</span>
+              <span class="tcard__play"><Icon name="play" size={28} /></span>
+            </button>
+            <div class="tcard__body">
+              <p class="tcard__meta">{d.status} · {d.scale === 'building' ? 'Building' : 'Neighbourhood'}</p>
+              <h3><a href={`/explore/${d.id}`}>{d.title}</a></h3>
+              <p class="text-[0.9375rem] text-muted mt-2">{d.summary}</p>
+              <button type="button" class="btn btn--green btn--sm mt-4" data-demo={d.demo} data-demo-title={d.title}><Icon name="play" size={18} />Try it</button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Explore by theme -->
+  <section class="section themes">
+    <div class="container-site">
+      <div class="head" data-reveal>
+        <p class="eyebrow">{h.themes.eyebrow}</p>
+        <h2>{h.themes.headline}</h2>
+      </div>
+      <div class="themes__grid">
+        {themes.map((t) => (
+          <a href={`/themes/${t.id}`} class={`theme theme--${t.id}`} data-reveal>
+            <span class="theme__icon"><Icon name={t.icon} size={26} /></span>
+            <span class="theme__label">{t.label}</span>
+            <span class="theme__q">“{t.question}”</span>
+            <span class="theme__count">{byTheme(t.id).length} things to explore <span aria-hidden="true">→</span></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- The shelves (categories) -->
+  <section class="section shelves">
+    <div class="container-site">
+      <div class="head" data-reveal>
+        <p class="eyebrow">{h.categories.eyebrow}</p>
+        <h2>{h.categories.headline}</h2>
+      </div>
+      <div class="shelves__grid">
+        {types.map((t) => (
+          <a href={t.href} class={`shelf shelf--${t.id}`} data-reveal>
+            <span class="shelf__n">{byType(t.id).length}</span>
+            <span class="shelf__icon"><Icon name={t.icon} size={24} /></span>
+            <span class="shelf__label">{t.plural}</span>
+            <span class="shelf__intro">{t.intro}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- From your town to Europe -->
+  <section class="section levels">
+    <div class="container-site">
+      <div class="head" data-reveal>
+        <p class="eyebrow">{h.ecosystem.eyebrow}</p>
+        <h2>{h.ecosystem.headline}</h2>
+        <p class="lede mt-3">{h.ecosystem.body}</p>
+      </div>
+      <ol class="levels__row" data-reveal>
+        {h.ecosystem.levels.map((l, i) => (
+          <li class={`level level--${i}`}>
+            <span class="level__badge">{l.label}</span>
+            <h3>{l.title}</h3>
+            <p>{l.body}</p>
+            {l.href && <a href={l.href} class="link-arrow mt-3">Have a look</a>}
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- Where to begin (audiences) -->
+  <section class="section">
+    <div class="container-site">
+      <div class="head" data-reveal>
+        <p class="eyebrow">{h.audiences.eyebrow}</p>
+        <h2>{h.audiences.headline}</h2>
+      </div>
+      <div class="doors">
+        {h.audiences.items.map((a) => (
+          <a href={a.href} class="door" data-reveal>
+            <span class="door__title">{a.title}</span>
+            <span class="door__body">{a.body}</span>
+            <span class="link-arrow">{a.cta}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Partners and news -->
+  <section class="section pn">
+    <div class="container-site pn__grid">
+      <div data-reveal>
+        <p class="eyebrow">{h.partners.eyebrow}</p>
+        <h2>{h.partners.headline}</h2>
+        <ul class="partners">
+          {h.partners.items.map((p) => <li><strong>{p.name}</strong><span>{p.role}</span></li>)}
+        </ul>
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">{h.news.eyebrow}</p>
+        <h2>{h.news.headline}</h2>
+        <ul class="news">
+          {h.news.items.map((n) => (
+            <li><span class="news__when">{n.when}</span><div><strong>{n.title}</strong><p>{n.body}</p></div><span class="news__status">{n.status}</span></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing -->
+  <section class="section pt-0">
+    <div class="container-site">
+      <div class="closing" data-reveal>
+        <div>
+          <h2>{h.closing.headline}</h2>
+          <p class="mt-3">{h.closing.body}</p>
+        </div>
+        <a href={h.closing.cta.href} class="btn btn--green">{h.closing.cta.label}<Icon name="arrow" size={18} /></a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .head { max-width: 44rem; }
+  .head h2 { margin-top: 0.75rem; }
+
+  /* Hero */
+  .hero { position: relative; padding-block: 2.5rem 4rem; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; inset: -20% -10% auto auto; width: 60rem; height: 40rem; background: radial-gradient(closest-side, rgb(34 211 122 / 0.14), transparent); pointer-events: none; }
+  .hero__grid { position: relative; display: grid; gap: 2.5rem; align-items: center; }
+  @media (min-width: 64rem) { .hero__grid { grid-template-columns: 5fr 6fr; gap: 3rem; } .hero { padding-block: 3.5rem 5rem; } }
+  .hero__title { margin-top: 1rem; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+  .hero__map-label { display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-navy); }
+  .hero__map-label span { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); box-shadow: 0 0 0 4px rgb(18 183 106 / 0.2); }
+
+  /* Try it */
+  .try { background: var(--color-navy-deep); color: #e6eef8; }
+  .try .eyebrow { color: var(--color-green-bright); }
+  .try h2 { color: #fff; }
+  .try .lede { color: #b6c6dc; }
+  .try__grid { display: grid; gap: 1.25rem; margin-top: 2.5rem; }
+  @media (min-width: 48rem) { .try__grid { grid-template-columns: repeat(3, 1fr); } }
+  .tcard { border-radius: 1.5rem; overflow: hidden; background: #0f2a55; border: 1px solid rgb(255 255 255 / 0.08); }
+  .tcard__screen { position: relative; display: block; width: 100%; aspect-ratio: 16 / 10; border: 0; padding: 0; cursor: pointer; overflow: hidden; background: radial-gradient(80% 90% at 50% 100%, #134a86, #0a1f44); }
+  .tcard__screen--1 { background: radial-gradient(80% 90% at 50% 100%, #0f6a63, #0a1f44); }
+  .tcard__screen--2 { background: radial-gradient(80% 90% at 50% 100%, #0c7a4c, #0a1f44); }
+  /* Real screenshot of each demo, with a slow camera-like pan and zoom (a different path per card),
+     a light sweep and a live badge. */
+  .tcard__shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 30% 60%; animation: tc-pan-0 18s ease-in-out infinite alternate; transition: filter 400ms ease; }
+  .tcard__screen--1 .tcard__shot { transform-origin: 40% 70%; animation-name: tc-pan-1; animation-duration: 22s; }
+  .tcard__screen--2 .tcard__shot { transform-origin: 50% 30%; animation-name: tc-pan-2; animation-duration: 20s; }
+  @keyframes tc-pan-0 { from { transform: scale(1.05) translate(0, 0); } to { transform: scale(1.22) translate(-4%, -3%); } }
+  @keyframes tc-pan-1 { from { transform: scale(1.1) translate(2%, -2%); } to { transform: scale(1.3) translate(-5%, -6%); } }
+  @keyframes tc-pan-2 { from { transform: scale(1.08) translate(-2%, 0); } to { transform: scale(1.2) translate(3%, -4%); } }
+  .tcard__screen::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(7 26 58 / 0.1), rgb(7 26 58 / 0.55)); transition: opacity 400ms ease; }
+  .tcard__screen:hover::after { opacity: 0.4; }
+  .tcard__sweep { position: absolute; inset: 0; z-index: 1; background: linear-gradient(100deg, transparent 40%, rgb(255 255 255 / 0.16) 50%, transparent 60%); transform: translateX(-100%); animation: tc-sweep 6s ease-in-out infinite; }
+  .tcard__screen--1 .tcard__sweep { animation-delay: 2s; } .tcard__screen--2 .tcard__sweep { animation-delay: 4s; }
+  @keyframes tc-sweep { 0%, 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .tcard__live { position: absolute; z-index: 2; left: 0.875rem; top: 0.875rem; display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 999px; background: rgb(7 26 58 / 0.75); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .tcard__live i { width: 7px; height: 7px; border-radius: 50%; background: var(--color-green-bright); box-shadow: 0 0 0 0 rgb(34 211 122 / 0.6); animation: tc-live 2s ease-out infinite; }
+  @keyframes tc-live { to { box-shadow: 0 0 0 8px rgb(34 211 122 / 0); } }
+  .tcard__play { position: absolute; z-index: 2; left: 50%; top: 50%; translate: -50% -50%; display: grid; place-items: center; width: 4.25rem; height: 4.25rem; border-radius: 50%; background: rgb(255 255 255 / 0.95); color: var(--color-navy); box-shadow: 0 0 0 10px rgb(255 255 255 / 0.12); transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .tcard__screen:hover .tcard__play { transform: scale(1.12); }
+  .tcard__body { padding: 1.25rem 1.5rem 1.5rem; }
+  .tcard__meta { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-green-bright); }
+  .tcard h3 { margin-top: 0.5rem; color: #fff; }
+  .tcard h3 a { text-decoration: none; }
+  .tcard .text-muted { color: #b6c6dc; }
+
+  /* Themes */
+  .themes__grid { display: grid; gap: 1rem; margin-top: 2.5rem; }
+  @media (min-width: 40rem) { .themes__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 64rem) { .themes__grid { grid-template-columns: repeat(3, 1fr); } }
+  .theme { --tone: var(--color-green); display: grid; gap: 0.625rem; align-content: start; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid var(--color-line); background: var(--color-surface); text-decoration: none; transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease; }
+  .theme:hover { transform: translateY(-4px); border-color: var(--tone); box-shadow: 0 22px 44px -28px var(--tone); }
+  .theme--climate { --tone: var(--color-teal); } .theme--urban-planning { --tone: var(--color-navy); } .theme--renovation { --tone: #c77d12; } .theme--mobility { --tone: #6b5bd6; } .theme--water { --tone: #1677c9; }
+  .theme__icon { display: inline-flex; align-items: center; justify-content: center; width: 3rem; height: 3rem; border-radius: 1rem; background: color-mix(in srgb, var(--tone) 14%, transparent); color: var(--tone); }
+  .theme__label { font-size: 1.25rem; font-weight: 700; }
+  .theme__q { font-size: 1rem; color: var(--color-muted); }
+  .theme__count { margin-top: 0.5rem; font-size: 0.875rem; font-weight: 700; color: var(--tone); }
+
+  /* Shelves */
+  .shelves { background: var(--color-mint); }
+  .shelves__grid { display: grid; gap: 1rem; margin-top: 2.5rem; }
+  @media (min-width: 40rem) { .shelves__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 64rem) { .shelves__grid { grid-template-columns: repeat(5, 1fr); } }
+  .shelf { position: relative; display: grid; gap: 0.5rem; align-content: start; padding: 1.5rem 1.25rem; border-radius: 1.5rem; background: var(--color-surface); text-decoration: none; box-shadow: 0 1px 0 var(--color-line); transition: transform 300ms ease, box-shadow 300ms ease; }
+  .shelf:hover { transform: translateY(-4px); box-shadow: 0 22px 44px -28px rgb(13 45 99 / 0.5); }
+  .shelf__n { position: absolute; right: 1.25rem; top: 1rem; font-size: 2.25rem; font-weight: 800; letter-spacing: -0.04em; color: rgb(13 45 99 / 0.12); }
+  .shelf__icon { color: var(--color-green); }
+  .shelf__label { font-size: 1.125rem; font-weight: 700; }
+  .shelf__intro { font-size: 0.9375rem; color: var(--color-muted); }
+
+  /* Levels */
+  .levels__row { position: relative; display: grid; gap: 1rem; margin: 2.5rem 0 0; padding: 0; list-style: none; }
+  @media (min-width: 48rem) { .levels__row { grid-template-columns: repeat(3, 1fr); } }
+  .level { position: relative; padding: 1.75rem 1.5rem; border-radius: 1.5rem; background: var(--color-surface); border: 1px solid var(--color-line); }
+  .level h3 { margin-top: 0.75rem; }
+  .level p { margin-top: 0.5rem; color: var(--color-muted); font-size: 0.9375rem; }
+  .level__badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; background: var(--color-sky); color: var(--color-navy); }
+  .level--2 .level__badge { background: var(--color-navy); color: #fff; }
+  @media (min-width: 48rem) {
+    .level:not(:last-child)::after { content: ''; position: absolute; right: -1rem; top: 50%; width: 1rem; height: 2px; background: repeating-linear-gradient(90deg, var(--color-green) 0 6px, transparent 6px 10px); animation: lv-flow 1s linear infinite; background-size: 10px 2px; }
+  }
+  @keyframes lv-flow { to { background-position: 10px 0; } }
+
+  /* Doors */
+  .doors { display: grid; gap: 1rem; margin-top: 2.5rem; }
+  @media (min-width: 48rem) { .doors { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 64rem) { .doors { grid-template-columns: repeat(4, 1fr); } }
+  .door { display: grid; gap: 0.625rem; align-content: start; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid var(--color-line); background: var(--color-surface); text-decoration: none; transition: border-color 250ms ease, transform 250ms ease; }
+  .door:hover { border-color: var(--color-green); transform: translateY(-3px); }
+  .door__title { font-size: 1.125rem; font-weight: 700; }
+  .door__body { font-size: 0.9375rem; color: var(--color-muted); }
+
+  /* Partners and news */
+  .pn { background: var(--color-surface); border-block: 1px solid var(--color-line); }
+  .pn__grid { display: grid; gap: 3rem; }
+  @media (min-width: 64rem) { .pn__grid { grid-template-columns: 1fr 1fr; } }
+  .pn h2 { margin-top: 0.75rem; font-size: clamp(1.5rem, 2.6vw, 2rem); }
+  .partners { display: grid; gap: 0.75rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+  @media (min-width: 40rem) { .partners { grid-template-columns: 1fr 1fr; } }
+  .partners li { display: grid; gap: 0.25rem; padding: 1rem 1.125rem; border-radius: 1rem; background: var(--color-paper); }
+  .partners span { font-size: 0.875rem; color: var(--color-muted); }
+  .news { display: grid; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+  .news li { display: grid; grid-template-columns: 6rem 1fr auto; gap: 1rem; align-items: start; padding-block: 1rem; border-bottom: 1px solid var(--color-line); }
+  .news__when { font-weight: 700; color: var(--color-navy); }
+  .news p { margin-top: 0.25rem; font-size: 0.9375rem; color: var(--color-muted); }
+  .news__status { padding: 0.125rem 0.625rem; border-radius: 999px; background: var(--color-mint); font-size: 0.75rem; font-weight: 700; color: #08744a; white-space: nowrap; }
+  @media (max-width: 40rem) { .news li { grid-template-columns: 1fr; gap: 0.25rem; } .news__status { justify-self: start; } }
+
+  /* Closing */
+  .closing { display: grid; gap: 1.5rem; align-items: center; padding: 2.5rem 2rem; border-radius: 2rem; background: linear-gradient(135deg, var(--color-navy), #134a8e 60%, #0e7f6a); color: #e6eef8; }
+  @media (min-width: 48rem) { .closing { grid-template-columns: 1fr auto; padding: 3.5rem; } }
+  .closing h2 { color: #fff; }
+</style>

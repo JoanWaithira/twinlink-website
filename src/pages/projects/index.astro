@@ -1,0 +1,16 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import Catalog from '../../components/Catalog.astro';
+import { byType, typeOf } from '../../content/catalog';
+const t = typeOf('project');
+const list = byType('project');
+---
+<Base title={`${t.plural} | twinlink.eu`} description={t.intro}>
+  <PageHead eyebrow={t.plural} title={t.intro} crumbs={[{ label: t.plural, href: t.href }]} />
+  <section class="pb-16">
+    <div class="container-site">
+      <Catalog items={list} fixedType="project" />
+    </div>
+  </section>
+</Base>

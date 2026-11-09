@@ -1,0 +1,25 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import Catalog from '../../components/Catalog.astro';
+import Icon from '../../components/Icon.astro';
+import { byTheme, themes, type ThemeId } from '../../content/catalog';
+export function getStaticPaths() { return themes.map((t) => ({ params: { slug: t.id } })); }
+const t = themes.find((x) => x.id === (Astro.params.slug as ThemeId))!;
+const list = byTheme(t.id);
+const demos = list.filter((i) => i.demo);
+---
+<Base title={`${t.label} | twinlink.eu`} description={t.intro}>
+  <PageHead eyebrow={`Theme: ${t.label}`} title={`“${t.question}”`} intro={t.intro} crumbs={[{ label: 'Explore', href: '/explore' }, { label: t.label, href: `/themes/${t.id}` }]}>
+    {demos.length > 0 && (
+      <div class="mt-6 flex flex-wrap gap-3">
+        {demos.map((d) => <button type="button" class="btn btn--green" data-demo={d.demo} data-demo-title={d.title}><Icon name="play" size={18} />Try: {d.title}</button>)}
+      </div>
+    )}
+  </PageHead>
+  <section class="pb-16">
+    <div class="container-site">
+      <Catalog items={list} fixedTheme={t.id} />
+    </div>
+  </section>
+</Base>

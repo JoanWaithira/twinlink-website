@@ -1,0 +1,60 @@
+---
+// A card for anything in the catalogue (twin, tool, project, knowledge, resource).
+import Icon from './Icon.astro';
+import { type Item, themeOf, typeOf } from '../content/catalog';
+interface Props { item: Item; size?: 'md' | 'lg' }
+const { item, size = 'md' } = Astro.props;
+const type = typeOf(item.type);
+---
+<article class:list={['icard', `icard--${item.type}`, size === 'lg' && 'icard--lg']} data-item data-type={item.type} data-themes={item.themes.join(' ')} data-text={`${item.title} ${item.summary} ${item.themes.join(' ')}`.toLowerCase()}>
+  <div class="icard__top">
+    <span class="icard__icon"><Icon name={item.icon} /></span>
+    <span class="icard__type">{type.label}</span>
+    {item.source ? <span class="icard__status icard__source" title={item.source.label}>UT Geohub</span> : item.status && <span class="icard__status">{item.status}</span>}
+  </div>
+  <h3 class="icard__title"><a href={`/explore/${item.id}`}>{item.title}</a></h3>
+  <p class="icard__summary">{item.summary}</p>
+  <ul class="icard__themes">{item.themes.slice(0, 3).map((t) => <li>{themeOf(t).label}</li>)}</ul>
+  <div class="icard__actions">
+    {item.demo
+      ? <button type="button" class="btn btn--green btn--sm" data-demo={item.demo} data-demo-title={item.title}><Icon name="play" size={18} />Try it</button>
+      : item.link
+        ? <a class="btn btn--ghost btn--sm" href={item.link} target="_blank" rel="noopener">Visit<Icon name="external" size={16} /></a>
+        : <a class="link-arrow" href={`/explore/${item.id}`}>{item.refs ? 'See the research' : 'Read more'}</a>}
+  </div>
+</article>
+
+<style>
+  .icard {
+    --tone: var(--color-navy);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-surface);
+    transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease, border-color 300ms ease;
+  }
+  .icard:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--tone) 35%, var(--color-line)); box-shadow: 0 22px 44px -28px color-mix(in srgb, var(--tone) 60%, transparent); }
+  .icard--twin { --tone: var(--color-green); }
+  .icard--tool { --tone: var(--color-navy); }
+  .icard--project { --tone: #c77d12; }
+  .icard--knowledge { --tone: var(--color-teal); }
+  .icard--resource { --tone: #6b5bd6; }
+  .icard[hidden] { display: none; }
+  .icard__top { display: flex; align-items: center; gap: 0.625rem; }
+  .icard__icon { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.875rem; background: color-mix(in srgb, var(--tone) 12%, transparent); color: var(--tone); }
+  .icard__type { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tone); }
+  .icard__status { margin-left: auto; padding: 0.125rem 0.5rem; border-radius: 999px; border: 1px solid var(--color-line); font-size: 0.75rem; font-weight: 600; color: var(--color-muted); }
+  .icard__title { font-size: 1.1875rem; }
+  .icard__title a { text-decoration: none; }
+  .icard__title a::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+  .icard__summary { font-size: 0.9375rem; color: var(--color-muted); }
+  .icard__themes { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+  .icard__themes li { padding: 0.125rem 0.5rem; border-radius: 999px; background: var(--color-paper); font-size: 0.75rem; font-weight: 600; color: var(--color-muted); }
+  .icard__source { border-color: color-mix(in srgb, var(--color-teal) 40%, var(--color-line)); color: var(--color-teal); }
+  .icard__actions { position: relative; z-index: 1; margin-top: auto; padding-top: 0.5rem; }
+  .icard--lg .icard__title { font-size: 1.375rem; }
+</style>

@@ -1,0 +1,84 @@
+---
+// A filterable grid of catalogue items: by type, by theme and by search text. Filters can be
+// preset (category or theme pages) and are kept in the address (?type=twin&theme=energy&q=heat).
+import ItemCard from './ItemCard.astro';
+import Icon from './Icon.astro';
+import { type Item, type ItemType, type ThemeId, themes, types } from '../content/catalog';
+interface Props { items: Item[]; fixedType?: ItemType; fixedTheme?: ThemeId }
+const { items, fixedType, fixedTheme } = Astro.props;
+---
+<div class="cat" data-catalog data-fixed-type={fixedType ?? ''} data-fixed-theme={fixedTheme ?? ''}>
+  <div class="cat__bar">
+    <label class="cat__search">
+      <Icon name="search" size={18} />
+      <span class="sr-only">Search</span>
+      <input type="search" placeholder="Filter by a word…" data-cat-q />
+    </label>
+    {!fixedType && (
+      <div class="cat__group" role="group" aria-label="Type">
+        <button type="button" data-cat-type="" aria-pressed="true">All</button>
+        {types.map((t) => <button type="button" data-cat-type={t.id} aria-pressed="false">{t.plural}</button>)}
+      </div>
+    )}
+    {!fixedTheme && (
+      <div class="cat__group" role="group" aria-label="Theme">
+        <button type="button" data-cat-theme="" aria-pressed="true">Any theme</button>
+        {themes.map((t) => <button type="button" data-cat-theme={t.id} aria-pressed="false">{t.label}</button>)}
+      </div>
+    )}
+  </div>
+  <p class="cat__count" aria-live="polite"><span data-cat-count>{items.length}</span> shown</p>
+  <div class="cat__grid">
+    {items.map((i) => <ItemCard item={i} />)}
+  </div>
+  <p class="cat__empty" data-cat-empty hidden>Nothing matches yet. Try fewer filters.</p>
+</div>
+
+<style>
+  .cat__bar { display: grid; gap: 0.75rem; padding: 1rem; border-radius: 1.25rem; background: var(--color-surface); border: 1px solid var(--color-line); }
+  .cat__search { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.875rem; border-radius: 999px; background: var(--color-paper); border: 1px solid var(--color-line); color: var(--color-muted); }
+  .cat__search input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; color: var(--color-ink); outline: none; }
+  .cat__group { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+  .cat__group button { padding: 0.375rem 0.75rem; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--color-ink); cursor: pointer; transition: all 200ms ease; }
+  .cat__group button:hover { border-color: var(--color-green); }
+  .cat__group button[aria-pressed='true'] { background: var(--color-navy); border-color: var(--color-navy); color: #fff; }
+  .cat__count { margin: 1rem 0 0.75rem; font-size: 0.875rem; color: var(--color-muted); }
+  .cat__grid { display: grid; gap: 1rem; }
+  @media (min-width: 40rem) { .cat__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 64rem) { .cat__grid { grid-template-columns: repeat(3, 1fr); } }
+  .cat__empty { padding: 2rem; text-align: center; color: var(--color-muted); }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-catalog]').forEach((cat) => {
+    const params = new URLSearchParams(location.search);
+    const state = { type: cat.dataset.fixedType || params.get('type') || '', theme: cat.dataset.fixedTheme || params.get('theme') || '', q: params.get('q') || '' };
+    const cards = [...cat.querySelectorAll<HTMLElement>('[data-item]')];
+    const qIn = cat.querySelector<HTMLInputElement>('[data-cat-q]')!;
+    qIn.value = state.q;
+    const apply = () => {
+      const words = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+      let n = 0;
+      for (const c of cards) {
+        const ok = (!state.type || c.dataset.type === state.type)
+          && (!state.theme || (c.dataset.themes ?? '').split(' ').includes(state.theme))
+          && words.every((w) => (c.dataset.text ?? '').includes(w));
+        c.hidden = !ok;
+        if (ok) n++;
+      }
+      cat.querySelector('[data-cat-count]')!.textContent = String(n);
+      cat.querySelector<HTMLElement>('[data-cat-empty]')!.hidden = n > 0;
+      cat.querySelectorAll<HTMLButtonElement>('[data-cat-type]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.catType === state.type)));
+      cat.querySelectorAll<HTMLButtonElement>('[data-cat-theme]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.catTheme === state.theme)));
+      const p = new URLSearchParams();
+      if (!cat.dataset.fixedType && state.type) p.set('type', state.type);
+      if (!cat.dataset.fixedTheme && state.theme) p.set('theme', state.theme);
+      if (state.q) p.set('q', state.q);
+      history.replaceState(null, '', `${location.pathname}${p.size ? `?${p}` : ''}`);
+    };
+    cat.querySelectorAll<HTMLButtonElement>('[data-cat-type]').forEach((b) => b.addEventListener('click', () => { state.type = b.dataset.catType ?? ''; apply(); }));
+    cat.querySelectorAll<HTMLButtonElement>('[data-cat-theme]').forEach((b) => b.addEventListener('click', () => { state.theme = b.dataset.catTheme ?? ''; apply(); }));
+    qIn.addEventListener('input', () => { state.q = qIn.value.trim(); apply(); });
+    apply();
+  });
+</script>

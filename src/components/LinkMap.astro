@@ -1,0 +1,259 @@
+---
+// The link map: everything on twinlink.eu as dots, linked to the themes they serve, with
+// twinlink.eu in the middle. Pick a theme to light up its links; hover a dot to see what it is;
+// click to open it. Laid out at build time (no library), animated with CSS.
+import { items, themes, typeOf } from '../content/catalog';
+import { home } from '../content/site';
+
+const W = 1000, H = 640, CX = 500, CY = 320;
+// Theme hubs on an ellipse around the centre (works for any number of themes).
+const hubPos: Record<string, { x: number; y: number }> = Object.fromEntries(
+  themes.map((t, i) => {
+    const a = -Math.PI / 2 + (i / themes.length) * Math.PI * 2 - Math.PI / themes.length;
+    return [t.id, { x: CX + Math.cos(a) * 330, y: CY + Math.sin(a) * 230 }];
+  }),
+);
+const wide = (n: number) => n >= 4; // items for (almost) every theme link to the centre
+// Deterministic pseudo-random from the id, so the map is the same on every build.
+const rnd = (s: string, k: number) => { let h = 2166136261 ^ k; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return ((h >>> 0) % 1000) / 1000; };
+type Node = { id: string; x: number; y: number; type: string; title: string; themes: string[] };
+const nodes: Node[] = items.map((it) => {
+  const hs = it.themes.map((t) => hubPos[t]);
+  let x = hs.reduce((a, h) => a + h.x, 0) / hs.length;
+  let y = hs.reduce((a, h) => a + h.y, 0) / hs.length;
+  // Items for every theme sit in a ring around the centre; others near their themes.
+  const ang = rnd(it.id, 1) * Math.PI * 2, dist = wide(it.themes.length) ? 110 + rnd(it.id, 2) * 60 : 45 + rnd(it.id, 2) * 70;
+  x += Math.cos(ang) * dist; y += Math.sin(ang) * dist * 0.8;
+  return { id: it.id, x, y, type: it.type, title: it.title, themes: it.themes };
+});
+// Push dots apart a little so none overlap, and keep them clear of the hubs.
+for (let k = 0; k < 120; k++) {
+  for (const a of nodes) {
+    for (const b of nodes) {
+      if (a === b) continue;
+      const dx = a.x - b.x, dy = a.y - b.y, d = Math.hypot(dx, dy) || 1;
+      if (d < 40) { a.x += (dx / d) * 1.2; a.y += (dy / d) * 1.2; }
+    }
+    for (const h of [...Object.values(hubPos), { x: CX, y: CY }]) {
+      const dx = a.x - h.x, dy = a.y - h.y, d = Math.hypot(dx, dy) || 1;
+      if (d < 92) { a.x += (dx / d) * 2; a.y += (dy / d) * 2; }
+    }
+    a.x = Math.min(Math.max(a.x, 40), W - 40); a.y = Math.min(Math.max(a.y, 40), H - 40);
+  }
+}
+const r = (n: number) => Math.round(n * 10) / 10;
+---
+<div class="lmap" data-linkmap>
+  <div class="lmap__chips" role="group" aria-label="Filter the map by theme">
+    <button type="button" class="lmap__chip" data-map-theme="" aria-pressed="true">{home.map.all}</button>
+    {themes.map((t) => <button type="button" class="lmap__chip" data-map-theme={t.id} aria-pressed="false">{t.label}</button>)}
+  </div>
+  <div class="lmap__box">
+    <svg viewBox={`0 0 ${W} ${H}`} class="lmap__svg" role="img" aria-label={home.map.hint}>
+      <defs>
+        <radialGradient id="lm-core" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#22d37a" stop-opacity="0.35" />
+          <stop offset="100%" stop-color="#22d37a" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <!-- Links: hub to centre, item to its themes -->
+      <g class="lmap__links">
+        {themes.map((t) => <line class="lmap__spoke" data-t={t.id} x1={CX} y1={CY} x2={hubPos[t.id].x} y2={hubPos[t.id].y} />)}
+        {nodes.flatMap((n) => wide(n.themes.length)
+          // Items for every theme link to the centre, to keep the map readable.
+          ? [<line class="lmap__link" data-t="*" data-n={n.id} x1={r(n.x)} y1={r(n.y)} x2={CX} y2={CY} />]
+          : n.themes.map((t) => (
+            <line class="lmap__link" data-t={t} data-n={n.id} x1={r(n.x)} y1={r(n.y)} x2={hubPos[t].x} y2={hubPos[t].y} />
+          )))}
+      </g>
+      <!-- Centre and theme hubs -->
+      <circle cx={CX} cy={CY} r="120" fill="url(#lm-core)" class="lmap__glow" />
+      <g class="lmap__core">
+        <circle cx={CX} cy={CY} r="44" />
+        <text x={CX} y={CY + 6} text-anchor="middle">twinlink</text>
+      </g>
+      {themes.map((t) => (
+        <g class="lmap__hub" data-hub={t.id}>
+          <circle cx={hubPos[t.id].x} cy={hubPos[t.id].y} r="34" />
+          <text x={hubPos[t.id].x} y={hubPos[t.id].y + 54} text-anchor="middle">{t.label}</text>
+        </g>
+      ))}
+      <!-- Pulses travelling along the links (added by the script) -->
+      <g class="lmap__pulses" data-pulses></g>
+      <!-- Items -->
+      {nodes.map((n, i) => (
+        <a href={`/explore/${n.id}`} class={`lmap__node lmap__node--${n.type}`} data-node={n.id} data-themes={n.themes.join(' ')} data-label={n.title} data-kind={typeOf(n.type as never).label}>
+          <circle cx={r(n.x)} cy={r(n.y)} r="12" class="lmap__halo" />
+          <circle cx={r(n.x)} cy={r(n.y)} r="7" class="lmap__dot" />
+          <title>{n.title}</title>
+        </a>
+      ))}
+    </svg>
+    <div class="lmap__tip" data-map-tip hidden><span data-tip-kind></span><strong data-tip-title></strong></div>
+  </div>
+  <ul class="lmap__legend">
+    {['twin', 'tool', 'project', 'knowledge', 'resource'].map((t) => <li class={`lmap__key lmap__key--${t}`}><i></i>{typeOf(t as never).plural}</li>)}
+  </ul>
+  <p class="lmap__hint">{home.map.hint}</p>
+</div>
+
+<style>
+  .lmap { position: relative; }
+  .lmap__chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .lmap__chip { padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--color-ink); cursor: pointer; transition: all 200ms ease; }
+  .lmap__chip:hover { border-color: var(--color-green); }
+  .lmap__chip[aria-pressed='true'] { background: var(--color-navy); border-color: var(--color-navy); color: #fff; }
+  .lmap__box { position: relative; margin-top: 1rem; border-radius: 1.75rem; background:
+      radial-gradient(60% 70% at 50% 50%, rgb(34 211 122 / 0.08), transparent 70%),
+      linear-gradient(rgb(13 45 99 / 0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, rgb(13 45 99 / 0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+      var(--color-surface);
+    border: 1px solid var(--color-line); overflow: hidden; }
+  .lmap__svg { display: block; width: 100%; height: auto; }
+
+  .lmap__spoke { stroke: var(--color-navy); stroke-width: 2; stroke-dasharray: 2 7; stroke-linecap: round; opacity: 0.35; animation: lm-flow 2.4s linear infinite; }
+  .lmap__link { stroke: var(--color-navy); stroke-width: 1.1; opacity: 0.14; transition: opacity 300ms ease, stroke 300ms ease; }
+  @keyframes lm-flow { to { stroke-dashoffset: -18; } }
+  .lmap__glow { animation: lm-breathe 5s ease-in-out infinite; transform-origin: 500px 320px; }
+  @keyframes lm-breathe { 50% { transform: scale(1.15); opacity: 0.7; } }
+  .lmap__core circle { fill: var(--color-navy); }
+  .lmap__core text { fill: #fff; font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
+  .lmap__hub circle { fill: #fff; stroke: var(--color-green); stroke-width: 3; transition: all 300ms ease; }
+  .lmap__hub text { fill: var(--color-ink); font-size: 15px; font-weight: 700; }
+
+  .lmap__node { cursor: pointer; }
+  .lmap__dot { fill: var(--tone); stroke: #fff; stroke-width: 2.5; transition: r 250ms ease; }
+  .lmap__halo { fill: var(--tone); opacity: 0.14; transition: opacity 250ms ease, r 250ms ease; }
+  .lmap__node:hover .lmap__halo, .lmap__node:focus-visible .lmap__halo { opacity: 0.3; r: 18; }
+  .lmap__node:hover .lmap__dot { r: 9; }
+  .lmap__node--twin { --tone: #12b76a; }
+  .lmap__node--tool { --tone: #0d2d63; }
+  .lmap__node--project { --tone: #c77d12; }
+  .lmap__node--knowledge { --tone: #0e9f9a; }
+  .lmap__node--resource { --tone: #6b5bd6; }
+  .lmap__pulses circle { fill: #22d37a; filter: drop-shadow(0 0 4px rgb(34 211 122 / 0.9)); pointer-events: none; }
+
+  /* Theme selected: its links light up, the rest steps back. */
+  .lmap[data-active] .lmap__link { opacity: 0.05; }
+  .lmap[data-active] .lmap__node { opacity: 0.25; transition: opacity 300ms ease; }
+  .lmap[data-active] .lmap__node.is-on { opacity: 1; }
+  .lmap[data-active] .lmap__link.is-on { opacity: 0.6; stroke: var(--color-green); stroke-width: 1.6; }
+  .lmap[data-active] .lmap__hub.is-on circle { fill: var(--color-green); }
+  .lmap[data-active] .lmap__hub.is-on text { fill: #08744a; }
+
+  .lmap__tip { position: absolute; z-index: 2; display: grid; gap: 0.125rem; max-width: 16rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem; background: var(--color-navy-deep); color: #fff; font-size: 0.875rem; pointer-events: none; transform: translate(-50%, calc(-100% - 14px)); box-shadow: 0 12px 30px -12px rgb(7 26 58 / 0.6); }
+  .lmap__tip span { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-green-bright); }
+  .lmap__legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 1rem 0 0; padding: 0; list-style: none; font-size: 0.875rem; color: var(--color-muted); }
+  .lmap__key { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .lmap__key i { width: 10px; height: 10px; border-radius: 50%; background: var(--tone); }
+  .lmap__key--twin { --tone: #12b76a; } .lmap__key--tool { --tone: #0d2d63; } .lmap__key--project { --tone: #c77d12; } .lmap__key--knowledge { --tone: #0e9f9a; } .lmap__key--resource { --tone: #6b5bd6; }
+  .lmap__hint { margin-top: 0.5rem; font-size: 0.875rem; color: var(--color-muted); }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-linkmap]').forEach((map) => {
+    const chips = [...map.querySelectorAll<HTMLButtonElement>('[data-map-theme]')];
+    const nodes = [...map.querySelectorAll<SVGAElement>('[data-node]')];
+    const links = [...map.querySelectorAll<SVGLineElement>('.lmap__link')];
+    const hubs = [...map.querySelectorAll<SVGGElement>('[data-hub]')];
+    const pick = (t: string) => {
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.mapTheme === t)));
+      if (!t) { map.removeAttribute('data-active'); return; }
+      map.setAttribute('data-active', t);
+      nodes.forEach((n) => n.classList.toggle('is-on', (n.dataset.themes ?? '').split(' ').includes(t)));
+      links.forEach((l) => l.classList.toggle('is-on', l.dataset.t === t || l.dataset.t === '*'));
+      hubs.forEach((h) => h.classList.toggle('is-on', h.dataset.hub === t));
+    };
+    chips.forEach((c) => c.addEventListener('click', () => pick(c.dataset.mapTheme ?? '')));
+    hubs.forEach((h) => h.addEventListener('click', () => pick(h.dataset.hub ?? '')));
+
+    const box = map.querySelector<HTMLElement>('.lmap__box')!;
+    const tip = map.querySelector<HTMLElement>('[data-map-tip]')!;
+    const show = (n: SVGAElement) => {
+      const dot = n.querySelector('.lmap__dot')!.getBoundingClientRect();
+      const b = box.getBoundingClientRect();
+      tip.querySelector('[data-tip-kind]')!.textContent = n.dataset.kind ?? '';
+      tip.querySelector('[data-tip-title]')!.textContent = n.dataset.label ?? '';
+      tip.style.left = `${dot.left + dot.width / 2 - b.left}px`;
+      tip.style.top = `${dot.top - b.top}px`;
+      tip.hidden = false;
+      // Light up this item's own links.
+      links.forEach((l) => l.classList.toggle('is-hover', l.dataset.n === n.dataset.node));
+    };
+    // ---- Living motion: dots drift, lines follow, pulses travel, dots lean towards the pointer.
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const svg = map.querySelector<SVGSVGElement>('svg')!;
+      const pulsesG = map.querySelector<SVGGElement>('[data-pulses]')!;
+      const NS = 'http://www.w3.org/2000/svg';
+      const state = nodes.map((n, i) => {
+        const dot = n.querySelector<SVGCircleElement>('.lmap__dot')!;
+        const halo = n.querySelector<SVGCircleElement>('.lmap__halo')!;
+        return { id: n.dataset.node!, el: n, dot, halo, bx: +dot.getAttribute('cx')!, by: +dot.getAttribute('cy')!, x: 0, y: 0, ph: i * 1.37, sp: 0.35 + (i % 5) * 0.06, lean: { x: 0, y: 0 } };
+      });
+      const byId = new Map(state.map((s) => [s.id, s]));
+      const linkEnds = links.map((l) => ({ l, n: byId.get(l.dataset.n!)!, hx: +l.getAttribute('x2')!, hy: +l.getAttribute('y2')! }));
+      const pointer = { x: -999, y: -999 };
+      svg.addEventListener('pointermove', (e) => {
+        const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+        const p = pt.matrixTransform(svg.getScreenCTM()!.inverse()); pointer.x = p.x; pointer.y = p.y;
+      });
+      svg.addEventListener('pointerleave', () => { pointer.x = pointer.y = -999; });
+      // Pulses: each runs from an item to its theme (or the centre) and then picks a new link.
+      const pulses = Array.from({ length: 16 }, () => {
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('r', '3');
+        pulsesG.append(c);
+        return { c, link: linkEnds[Math.floor(Math.random() * linkEnds.length)], t: Math.random(), speed: 0.35 + Math.random() * 0.35, out: Math.random() < 0.5 };
+      });
+      let visible = true;
+      new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(svg);
+      const t0 = performance.now();
+      let last = t0;
+      const frame = (now: number) => {
+        requestAnimationFrame(frame);
+        if (!visible) { last = now; return; }
+        const t = (now - t0) / 1000, dt = Math.min((now - last) / 1000, 0.05);
+        last = now;
+        for (const s of state) {
+          // Drift: two slow waves per axis, so no two dots move alike.
+          const dx = Math.sin(t * s.sp + s.ph) * 5 + Math.sin(t * s.sp * 0.6 + s.ph * 2) * 3;
+          const dy = Math.cos(t * s.sp * 0.8 + s.ph) * 5 + Math.sin(t * s.sp * 1.3 + s.ph) * 2;
+          // Lean towards the pointer when it is near.
+          const px = pointer.x - s.bx, py = pointer.y - s.by, d = Math.hypot(px, py);
+          const pull = d < 140 ? (1 - d / 140) * 14 : 0;
+          s.lean.x += ((d ? (px / d) * pull : 0) - s.lean.x) * Math.min(dt * 6, 1);
+          s.lean.y += ((d ? (py / d) * pull : 0) - s.lean.y) * Math.min(dt * 6, 1);
+          s.x = s.bx + dx + s.lean.x; s.y = s.by + dy + s.lean.y;
+          s.dot.setAttribute('cx', s.x.toFixed(1)); s.dot.setAttribute('cy', s.y.toFixed(1));
+          s.halo.setAttribute('cx', s.x.toFixed(1)); s.halo.setAttribute('cy', s.y.toFixed(1));
+        }
+        for (const e of linkEnds) { e.l.setAttribute('x1', e.n.x.toFixed(1)); e.l.setAttribute('y1', e.n.y.toFixed(1)); }
+        const active = map.getAttribute('data-active');
+        for (const p of pulses) {
+          p.t += dt * p.speed;
+          if (p.t >= 1) {
+            const pool = active ? linkEnds.filter((e) => e.l.dataset.t === active || e.l.dataset.t === '*') : linkEnds;
+            p.link = pool[Math.floor(Math.random() * pool.length)] ?? linkEnds[0];
+            p.t = 0; p.out = Math.random() < 0.5; p.speed = 0.35 + Math.random() * 0.35;
+          }
+          const k = p.out ? p.t : 1 - p.t;
+          const x = p.link.n.x + (p.link.hx - p.link.n.x) * k, y = p.link.n.y + (p.link.hy - p.link.n.y) * k;
+          p.c.setAttribute('cx', x.toFixed(1)); p.c.setAttribute('cy', y.toFixed(1));
+          p.c.setAttribute('opacity', (Math.sin(p.t * Math.PI) * 0.95).toFixed(2));
+        }
+      };
+      requestAnimationFrame(frame);
+    }
+
+    nodes.forEach((n) => {
+      n.addEventListener('pointerenter', () => show(n));
+      n.addEventListener('focus', () => show(n));
+      n.addEventListener('pointerleave', () => { tip.hidden = true; links.forEach((l) => l.classList.remove('is-hover')); });
+      n.addEventListener('blur', () => { tip.hidden = true; });
+    });
+  });
+</script>
+
+<style is:global>
+  .lmap__link.is-hover { opacity: 0.85 !important; stroke: #12b76a !important; stroke-width: 2 !important; }
+</style>

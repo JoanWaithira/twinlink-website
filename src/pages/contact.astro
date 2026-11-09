@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import { contact as c, site } from '../content/site';
+---
+<Base title={c.seo.title} description={c.seo.description}>
+  <PageHead eyebrow={c.eyebrow} title={c.headline} intro={c.body} crumbs={[{ label: 'Contact', href: '/contact' }]} />
+  <section class="section pt-6">
+    <div class="container-site contact">
+      <div class="contact__topics">
+        {c.topics.map((t) => (
+          <div class="card" data-reveal>
+            <h2 class="text-[1.25rem]">{t.title}</h2>
+            <p class="mt-2 text-muted">{t.body}</p>
+          </div>
+        ))}
+        <a href={site.linkedin} rel="noopener" class="card contact__li" data-reveal>
+          <Icon name="linkedin" size={28} />
+          <span><strong>Message us on LinkedIn</strong><span>The quickest way to reach the team.</span></span>
+        </a>
+      </div>
+      <aside class="card contact__addr" data-reveal>
+        <Icon name="pin" size={26} class="text-[var(--color-green)]" />
+        <h2 class="text-[1.125rem] mt-3">Visit or write</h2>
+        <address class="mt-2 not-italic">{site.org.street}<br />{site.org.postcode}<br />{site.org.country}</address>
+        <dl class="mt-4 grid gap-1 text-[0.875rem] text-muted">
+          <div>KvK {site.org.kvk}</div><div>RSIN {site.org.rsin}</div><div>PIC {site.org.pic}</div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contact { display: grid; gap: 1rem; }
+  @media (min-width: 64rem) { .contact { grid-template-columns: 2fr 1fr; gap: 1.5rem; } }
+  .contact__topics { display: grid; gap: 1rem; }
+  @media (min-width: 48rem) { .contact__topics { grid-template-columns: 1fr 1fr; } }
+  .contact__li { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; text-decoration: none; background: var(--color-navy); color: #fff; border-color: var(--color-navy); }
+  .contact__li span { display: grid; }
+  .contact__li span span { font-size: 0.9375rem; color: #b6c6dc; }
+</style>

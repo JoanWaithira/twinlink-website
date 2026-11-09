@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import Catalog from '../../components/Catalog.astro';
+import LinkMap from '../../components/LinkMap.astro';
+import { items } from '../../content/catalog';
+---
+<Base title="Explore everything | twinlink.eu" description="Every twin, tool, project, knowledge page and resource on twinlink.eu, in one place. Filter by theme or search.">
+  <PageHead eyebrow="Explore" title="Everything, on one table." intro="Every twin, tool, project, piece of knowledge and resource we have. Narrow it down by theme or type, or just search." crumbs={[{ label: 'Explore', href: '/explore' }]} />
+  <section class="pb-16">
+    <div class="container-site">
+      <Catalog items={items} />
+      <div class="mt-16">
+        <p class="eyebrow">Prefer a picture?</p>
+        <h2 class="mt-3 mb-6">See how it all links up.</h2>
+        <LinkMap />
+      </div>
+    </div>
+  </section>
+</Base>

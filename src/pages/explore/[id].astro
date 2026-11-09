@@ -1,0 +1,150 @@
+---
+// One page per catalogue item: what it is, a live demo or video where there is one, and what
+// it links to.
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import ItemCard from '../../components/ItemCard.astro';
+import Icon from '../../components/Icon.astro';
+import { items, scales, themeOf, typeOf, type Item } from '../../content/catalog';
+import { Image } from 'astro:assets';
+const shots = import.meta.glob<{ default: ImageMetadata }>('../../assets/demos/*.png', { eager: true });
+export function getStaticPaths() { return items.map((i) => ({ params: { id: i.id } })); }
+const item = items.find((i) => i.id === Astro.params.id) as Item;
+const type = typeOf(item.type);
+const shot = item.preview ? Object.entries(shots).find(([p]) => p.endsWith(`/${item.preview}.png`))?.[1].default : undefined;
+// Related: share a theme, other items first, the same type before others.
+const related = items
+  .filter((i) => i.id !== item.id && i.themes.some((t) => item.themes.includes(t)))
+  .sort((a, b) => Number(b.type !== item.type) - Number(a.type !== item.type) || b.themes.filter((t) => item.themes.includes(t)).length - a.themes.filter((t) => item.themes.includes(t)).length)
+  .slice(0, 3);
+---
+<Base title={`${item.title} | twinlink.eu`} description={item.summary}>
+  <PageHead eyebrow={type.label} title={item.title} intro={item.summary} crumbs={[{ label: type.plural, href: type.href }, { label: item.title, href: `/explore/${item.id}` }]}>
+    <ul class="facts">
+      {item.status && <li><span>Status</span>{item.status}</li>}
+      {item.source && <li><span>From</span><a href={item.source.url} target="_blank" rel="noopener">{item.source.label}</a></li>}
+      <li><span>Scale</span>{scales[item.scale]}</li>
+      <li><span>Themes</span>{item.themes.map((t) => themeOf(t).label).join(', ')}</li>
+    </ul>
+  </PageHead>
+
+  <section class="pb-16">
+    <div class="container-site detail">
+      <div class="detail__main">
+        {item.demo && (
+          <div class="live">
+            {shot && <Image src={shot} alt="" widths={[800, 1400]} sizes="(min-width: 64rem) 60vw, 100vw" class="live__shot" />}
+            <button type="button" class="live__start" data-inline-demo={item.demo} aria-label={`Start the live demo of ${item.title}`}>
+              <span class="live__play"><Icon name="play" size={30} /></span>
+              <span class="live__text"><strong>Start the live demo</strong><span>Runs on its own website, right here in the page.</span></span>
+            </button>
+            <iframe title={`${item.title}: live demo`} hidden allow="fullscreen; xr-spatial-tracking" referrerpolicy="no-referrer"></iframe>
+            <div class="live__bar">
+              <button type="button" class="btn btn--ghost btn--sm" data-demo={item.demo} data-demo-title={item.title}>Bigger view</button>
+              <a class="btn btn--ghost btn--sm" href={item.demo} target="_blank" rel="noopener">New tab<Icon name="external" size={16} /></a>
+            </div>
+          </div>
+        )}
+        {item.video && (
+          <div class="video">
+            <button type="button" class="video__start" data-video={item.video} aria-label={`Play the video about ${item.title}`}>
+              <span class="live__play"><Icon name="play" size={30} /></span>
+              <span class="live__text"><strong>Play the video</strong><span>Loads from YouTube (privacy-enhanced mode) when you press play.</span></span>
+            </button>
+          </div>
+        )}
+        <div class="prose">
+          {(item.body ?? [item.summary]).map((p) => <p>{p}</p>)}
+        </div>
+        {item.features && (
+          <ul class="features">
+            {item.features.map((f) => <li><span aria-hidden="true">✓</span>{f}</li>)}
+          </ul>
+        )}
+        {item.refs && (
+          <div class="refs">
+            <h2 class="text-[1.25rem]">Read the research</h2>
+            <ul>
+              {item.refs.map((r) => (
+                <li>{r.url ? <a href={r.url} target="_blank" rel="noopener">{r.label}<Icon name="external" size={15} /></a> : <span>{r.label}</span>}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {item.link && <a href={item.link} target="_blank" rel="noopener" class="btn btn--primary mt-6">Visit the official page<Icon name="external" size={16} /></a>}
+        {item.source && <p class="srcnote">This example comes from the <a href={item.source.url} target="_blank" rel="noopener">{item.source.label}</a>, a twinlink.eu knowledge partner.</p>}
+      </div>
+      <aside class="detail__side">
+        <div class="card">
+          <h2 class="text-[1.125rem]">Want to use this?</h2>
+          <p class="mt-2 text-[0.9375rem] text-muted">Tell us about your place, and we will help you get started.</p>
+          <a href="/contact" class="btn btn--primary btn--sm mt-4">Get in touch</a>
+        </div>
+        <div class="card mt-4">
+          <h2 class="text-[1.125rem]">Themes</h2>
+          <ul class="mt-3 grid gap-2">
+            {item.themes.map((t) => <li><a class="link-arrow" href={`/themes/${t}`}>{themeOf(t).label}</a></li>)}
+          </ul>
+        </div>
+      </aside>
+    </div>
+    {related.length > 0 && (
+      <div class="container-site mt-16">
+        <p class="eyebrow">Linked to this</p>
+        <h2 class="mt-3">You might also look at</h2>
+        <div class="rel">{related.map((r) => <ItemCard item={r} />)}</div>
+      </div>
+    )}
+  </section>
+</Base>
+
+<style>
+  .facts { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 1.5rem 0 0; padding: 0; list-style: none; font-weight: 600; }
+  .facts span { display: block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-muted); }
+  .detail { display: grid; gap: 2rem; }
+  @media (min-width: 64rem) { .detail { grid-template-columns: 1fr 20rem; gap: 3rem; } }
+  .live, .video { position: relative; margin-bottom: 2rem; border-radius: 1.5rem; overflow: hidden; background: radial-gradient(80% 90% at 50% 100%, #0f5f5a, #0a1f44); aspect-ratio: 16 / 10; }
+  .live__shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(1.05); animation: live-pan 24s ease-in-out infinite alternate; }
+  @keyframes live-pan { from { transform: scale(1.04); } to { transform: scale(1.16) translate(-2%, -2%); } }
+  .live__start { background: linear-gradient(180deg, rgb(7 26 58 / 0.25), rgb(7 26 58 / 0.7)) !important; }
+  .live iframe, .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .live__start, .video__start { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 1rem; border: 0; background: transparent; color: #fff; cursor: pointer; text-align: center; font: inherit; }
+  .live__play { display: grid; place-items: center; width: 5rem; height: 5rem; border-radius: 50%; background: #fff; color: var(--color-navy); box-shadow: 0 0 0 12px rgb(255 255 255 / 0.14); transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .live__start:hover .live__play, .video__start:hover .live__play { transform: scale(1.1); }
+  .live__text { display: grid; gap: 0.25rem; }
+  .live__text span { font-size: 0.875rem; color: #b6c6dc; }
+  .live__bar { position: absolute; right: 0.75rem; bottom: 0.75rem; display: flex; gap: 0.5rem; }
+  .prose { display: grid; gap: 1rem; max-width: 44rem; font-size: 1.0625rem; }
+  .features { display: grid; gap: 0.625rem; margin: 1.75rem 0 0; padding: 0; list-style: none; }
+  @media (min-width: 40rem) { .features { grid-template-columns: 1fr 1fr; } }
+  .features li { display: flex; gap: 0.625rem; align-items: center; padding: 0.875rem 1rem; border-radius: 1rem; background: var(--color-mint); font-weight: 600; }
+  .features span { color: var(--color-green); font-weight: 800; }
+  .facts a { color: var(--color-navy); }
+  .refs { margin-top: 2rem; }
+  .refs ul { display: grid; gap: 0.625rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+  .refs li { padding: 0.875rem 1rem; border-radius: 1rem; border: 1px solid var(--color-line); background: var(--color-surface); font-size: 0.9375rem; }
+  .refs a { display: inline-flex; gap: 0.375rem; align-items: baseline; color: var(--color-navy); font-weight: 600; text-decoration: none; }
+  .refs a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .refs span { color: var(--color-muted); }
+  .srcnote { margin-top: 1.5rem; font-size: 0.875rem; color: var(--color-muted); }
+  .srcnote a { color: var(--color-navy); font-weight: 600; }
+  .rel { display: grid; gap: 1rem; margin-top: 1.5rem; }
+  @media (min-width: 48rem) { .rel { grid-template-columns: repeat(3, 1fr); } }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-inline-demo]').forEach((b) => b.addEventListener('click', () => {
+    const f = b.parentElement!.querySelector('iframe')!;
+    f.src = b.dataset.inlineDemo!;
+    f.hidden = false;
+    b.hidden = true;
+    b.parentElement!.querySelector('.live__shot')?.remove();
+  }));
+  document.querySelectorAll<HTMLButtonElement>('[data-video]').forEach((b) => b.addEventListener('click', () => {
+    const f = document.createElement('iframe');
+    f.src = `https://www.youtube-nocookie.com/embed/${b.dataset.video}?autoplay=1&rel=0`;
+    f.title = b.getAttribute('aria-label') ?? 'Video';
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    b.replaceWith(f);
+  }));
+</script>

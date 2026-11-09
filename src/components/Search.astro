@@ -1,0 +1,70 @@
+---
+// Search everything on twinlink.eu as you type (all on the page, no server needed).
+import Icon from './Icon.astro';
+import { items, typeOf } from '../content/catalog';
+interface Props { label: string; placeholder: string }
+const { label, placeholder } = Astro.props;
+const index = items.map((i) => ({ id: i.id, t: i.title, s: i.summary, k: typeOf(i.type).label, q: `${i.title} ${i.summary} ${(i.body ?? []).join(' ')} ${i.themes.join(' ')} ${i.type}`.toLowerCase() }));
+---
+<form class="srch" action="/explore" method="get" role="search" data-search data-index={JSON.stringify(index)}>
+  <label class="srch__label" for="srch-q">{label}</label>
+  <div class="srch__box">
+    <Icon name="search" class="srch__icon" />
+    <input id="srch-q" name="q" type="search" autocomplete="off" placeholder={placeholder} aria-controls="srch-list" aria-expanded="false" />
+    <button type="submit" class="srch__go">Search</button>
+  </div>
+  <ul id="srch-list" class="srch__list" role="listbox" hidden></ul>
+</form>
+
+<style>
+  .srch { position: relative; margin-top: 1.75rem; max-width: 34rem; }
+  .srch__label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 700; color: var(--color-navy); }
+  .srch__box { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.375rem 0.375rem 1rem; border-radius: 999px; background: var(--color-surface); border: 1.5px solid var(--color-line); box-shadow: 0 14px 34px -22px rgb(13 45 99 / 0.5); transition: border-color 200ms ease, box-shadow 200ms ease; }
+  .srch__box:focus-within { border-color: var(--color-green); box-shadow: 0 0 0 4px rgb(18 183 106 / 0.15), 0 14px 34px -22px rgb(13 45 99 / 0.5); }
+  .srch__box :global(.srch__icon) { flex: none; color: var(--color-muted); }
+  .srch input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 1rem; color: var(--color-ink); outline: none; }
+  .srch__go { flex: none; padding: 0.625rem 1.125rem; border: 0; border-radius: 999px; background: var(--color-navy); color: #fff; font: inherit; font-weight: 600; font-size: 0.9375rem; cursor: pointer; }
+  .srch__list { position: absolute; left: 0; right: 0; top: calc(100% + 0.5rem); z-index: 20; margin: 0; padding: 0.375rem; list-style: none; border-radius: 1.25rem; background: var(--color-surface); border: 1px solid var(--color-line); box-shadow: 0 24px 50px -24px rgb(13 45 99 / 0.45); }
+  .srch__list :global(a) { display: grid; gap: 0.125rem; padding: 0.625rem 0.875rem; border-radius: 0.875rem; text-decoration: none; }
+  .srch__list :global(a:hover), .srch__list :global(a[aria-selected='true']) { background: var(--color-mint); }
+  .srch__list :global(.k) { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #08744a; }
+  .srch__list :global(.t) { font-weight: 600; }
+  .srch__list :global(.s) { font-size: 0.8125rem; color: var(--color-muted); }
+  .srch__list :global(.none) { padding: 0.75rem 0.875rem; font-size: 0.9375rem; color: var(--color-muted); }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('[data-search]').forEach((form) => {
+    const index: { id: string; t: string; s: string; k: string; q: string }[] = JSON.parse(form.dataset.index!);
+    const input = form.querySelector('input')!;
+    const list = form.querySelector<HTMLUListElement>('ul')!;
+    let sel = -1;
+    const render = () => {
+      const q = input.value.trim().toLowerCase();
+      if (q.length < 2) { list.hidden = true; input.setAttribute('aria-expanded', 'false'); return; }
+      const words = q.split(/\s+/);
+      const hits = index.filter((i) => words.every((w) => i.q.includes(w))).slice(0, 6);
+      list.replaceChildren(...(hits.length ? hits.map((h, n) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `/explore/${h.id}`;
+        a.setAttribute('role', 'option');
+        a.setAttribute('aria-selected', String(n === sel));
+        for (const [cls, txt] of [['k', h.k], ['t', h.t], ['s', h.s]]) { const sp = document.createElement('span'); sp.className = cls; sp.textContent = txt; a.append(sp); }
+        li.append(a);
+        return li;
+      }) : [(() => { const li = document.createElement('li'); li.className = 'none'; li.textContent = 'Nothing yet. Try another word, or browse everything.'; return li; })()]));
+      list.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+    };
+    input.addEventListener('input', () => { sel = -1; render(); });
+    input.addEventListener('keydown', (e) => {
+      const opts = [...list.querySelectorAll('a')];
+      if (e.key === 'ArrowDown') { sel = Math.min(sel + 1, opts.length - 1); render(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { sel = Math.max(sel - 1, -1); render(); e.preventDefault(); }
+      else if (e.key === 'Enter' && sel >= 0 && opts[sel]) { e.preventDefault(); location.href = opts[sel].href; }
+      else if (e.key === 'Escape') { list.hidden = true; }
+    });
+    document.addEventListener('click', (e) => { if (!form.contains(e.target as Node)) list.hidden = true; });
+  });
+</script>

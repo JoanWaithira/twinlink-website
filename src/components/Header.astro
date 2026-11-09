@@ -1,0 +1,69 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/twinlink-logo.png';
+import Icon from './Icon.astro';
+import { nav } from '../content/site';
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const active = (href: string) => path === href || path.startsWith(href + '/');
+---
+<header class="hdr" data-header>
+  <div class="container-site hdr__bar">
+    <a href="/" class="hdr__logo" aria-label="twinlink.eu home">
+      <Image src={logo} alt="twinlink.eu" width={300} class="hdr__logo-img" loading="eager" />
+    </a>
+    <nav class="hdr__nav" id="site-nav" aria-label="Main" data-nav>
+      <ul>
+        {nav.map((l) => (
+          <li><a href={l.href} aria-current={active(l.href) ? 'page' : undefined}>{l.label}</a></li>
+        ))}
+        <li class="hdr__nav-cta"><a href="/contact" class="btn btn--primary">Contact</a></li>
+      </ul>
+    </nav>
+    <a href="/contact" class="btn btn--primary btn--sm hdr__cta">Contact</a>
+    <button type="button" class="hdr__menu" aria-expanded="false" aria-controls="site-nav" data-menu>
+      <Icon name="menu" /><span class="sr-only">Menu</span>
+    </button>
+  </div>
+</header>
+
+<style>
+  .hdr { position: sticky; top: 0; z-index: 50; transition: background-color 300ms ease, box-shadow 300ms ease; }
+  .hdr[data-scrolled] { background: color-mix(in srgb, var(--color-paper) 86%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 1px 0 var(--color-line); }
+  .hdr__bar { display: flex; align-items: center; gap: 1.5rem; height: 4.75rem; }
+  .hdr__logo { display: inline-flex; flex: none; }
+  .hdr__logo-img { height: 2.75rem; width: auto; }
+  .hdr__nav { margin-left: auto; }
+  .hdr__nav ul { display: flex; align-items: center; gap: 0.125rem; margin: 0; padding: 0; list-style: none; }
+  .hdr__nav a:not(.btn) { display: inline-block; padding: 0.5rem 0.75rem; border-radius: 999px; font-size: 0.9375rem; font-weight: 600; text-decoration: none; color: var(--color-ink); white-space: nowrap; transition: background-color 200ms ease, color 200ms ease; }
+  .hdr__nav a:not(.btn):hover { background: var(--color-mint); }
+  .hdr__nav a[aria-current='page'] { color: #08744a; background: var(--color-mint); }
+  .hdr__nav-cta, .hdr__menu { display: none; }
+  .hdr__cta { flex: none; }
+
+  @media (max-width: 63.99rem) {
+    .hdr__bar { height: 4rem; }
+    .hdr__logo-img { height: 2.25rem; }
+    .hdr__cta { display: none; }
+    .hdr__menu { display: inline-flex; margin-left: auto; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-navy); cursor: pointer; }
+    .hdr__nav { position: fixed; inset: 4rem 0 auto 0; display: none; padding: 1rem 1.25rem 1.5rem; background: var(--color-paper); border-bottom: 1px solid var(--color-line); box-shadow: 0 20px 40px -20px rgb(11 31 58 / 0.25); }
+    .hdr__nav[data-open] { display: block; }
+    .hdr__nav ul { flex-direction: column; align-items: stretch; gap: 0.25rem; }
+    .hdr__nav a:not(.btn) { display: block; padding: 0.75rem 1rem; font-size: 1.0625rem; }
+    .hdr__nav-cta { display: block; margin-top: 0.75rem; }
+    .hdr__nav-cta .btn { width: 100%; }
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-header]')!;
+  const onScroll = () => header.toggleAttribute('data-scrolled', window.scrollY > 8);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+  const menu = document.querySelector<HTMLButtonElement>('[data-menu]')!;
+  const navEl = document.querySelector<HTMLElement>('[data-nav]')!;
+  menu.addEventListener('click', () => {
+    const open = menu.getAttribute('aria-expanded') !== 'true';
+    menu.setAttribute('aria-expanded', String(open));
+    navEl.toggleAttribute('data-open', open);
+  });
+</script>
