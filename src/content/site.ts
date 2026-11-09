@@ -24,6 +24,7 @@ export const site = {
 export const nav = [
   { label: 'Explore', href: '/explore' },
   { label: 'Digital twins', href: '/digital-twins' },
+  { label: 'Geohub', href: '/geohub' },
   { label: 'Tools', href: '/tools' },
   { label: 'Projects', href: '/projects' },
   { label: 'Knowledge', href: '/knowledge' },

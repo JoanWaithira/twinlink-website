@@ -2,19 +2,34 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import ItemCard from '../components/ItemCard.astro';
-import LinkMap from '../components/LinkMap.astro';
+import TwinDashboard from '../components/TwinDashboard.astro';
 import Search from '../components/Search.astro';
 import { home as h } from '../content/site';
-import { byTheme, byType, themes, types } from '../content/catalog';
+import { byTheme, byType, items, themes, types } from '../content/catalog';
 import { Image } from 'astro:assets';
 // Real screenshots of the live demos (src/assets/demos/).
 const shots = import.meta.glob<{ default: ImageMetadata }>('../assets/demos/*.png', { eager: true });
 const shotFor = (name?: string) => name ? Object.entries(shots).find(([p]) => p.endsWith(`/${name}.png`))?.[1].default : undefined;
-const demos = byType('twin');
+const demos = byType('twin').filter((d) => d.demo);
+// Our own films (public/media/), shown as silent loops; click for the full video.
+const filmOrder = ['data-space-and-data-labs', 'aadorp-energy-retrofit-dashboard', 'ai-building-energy-twin', 'area-redesign-twin', 'wind-farm-twin', 'esdl-energy-system-editor'];
+const films = items.filter((i) => i.clip).sort((a, b) => (filmOrder.indexOf(a.id) + 1 || 99) - (filmOrder.indexOf(b.id) + 1 || 99));
+// Introduction video (YouTube, opens with sound): twinlink.eu | Digital Twins in Action: Almelo Pilot.
+const HERO_VIDEO = 'JFxr2k6DeDQ';
 ---
 <Base title={h.seo.title} description={h.seo.description}>
-  <!-- Hero: the promise, a search, and the link map of everything on the site. -->
+  <!-- Hero: the promise and a search, over the background film. -->
   <section class="hero">
+    <!-- Background film: a montage of our own twins (see the films below). Added by the script; still image for reduced motion and data saver. -->
+    <div class="hero__film" data-film data-src="/media/hero-montage.mp4" data-src-sm="/media/hero-montage-sm.mp4" data-poster="/media/hero-montage.jpg" aria-hidden="true"></div>
+    <div class="hero__veil" aria-hidden="true"></div>
+    <div class="hero__filmbar container-site">
+      <button type="button" class="hero__watch" data-watch={HERO_VIDEO} data-watch-title="twinlink.eu | Digital Twins in Action: Almelo Pilot">
+        <span class="hero__watch-play"><Icon name="play" size={20} /></span>
+        <span class="hero__watch-text"><strong>Watch the introduction video</strong><span>Digital twins in action: the Almelo pilot · with sound</span></span>
+      </button>
+      <button type="button" class="hero__filmbtn" data-film-toggle hidden aria-pressed="false">Pause background</button>
+    </div>
     <div class="container-site hero__grid">
       <div class="hero__text">
         <p class="eyebrow">{h.hero.eyebrow}</p>
@@ -24,11 +39,53 @@ const demos = byType('twin');
         <div class="hero__actions">
           <a href={h.hero.primary.href} class="btn btn--green"><Icon name="play" size={18} />{h.hero.primary.label}</a>
           <a href={h.hero.secondary.href} class="btn btn--ghost">{h.hero.secondary.label}</a>
+          <button type="button" class="btn btn--ghost hero__intro" data-watch={HERO_VIDEO} data-watch-title="twinlink.eu | Digital Twins in Action: Almelo Pilot"><Icon name="play" size={18} />Intro video</button>
         </div>
       </div>
-      <div class="hero__map">
-        <p class="hero__map-label"><span></span>{h.map.label}</p>
-        <LinkMap />
+    </div>
+  </section>
+
+  <!-- twinlink OS: a live 3D twin with its data panels, in its own section (not over the video). -->
+  <section class="section osdemo">
+    <div class="container-site osdemo__grid">
+      <div class="head" data-reveal>
+        <p class="eyebrow">A twin at work</p>
+        <h2>One screen for the whole town.</h2>
+        <p class="lede mt-3">Buildings, energy, heat and traffic in one live model. Switch layers, follow the highlighted buildings, and see the numbers change as the town does.</p>
+        <ul class="osdemo__points">
+          <li><span>Energy</span>Use, solar and grid load, building by building.</li>
+          <li><span>Heat</span>Hot streets and roofs, and where trees would help.</li>
+          <li><span>Mobility</span>Traffic, bikes and buses through the same streets.</li>
+        </ul>
+        <a href="#try" class="btn btn--green mt-6"><Icon name="play" size={18} />Try a real twin</a>
+      </div>
+      <div class="osdemo__twin" data-reveal><TwinDashboard /></div>
+    </div>
+  </section>
+
+  <!-- Twins in motion: our own films, playing as silent loops. -->
+  <section class="section films">
+    <div class="container-site">
+      <div class="head" data-reveal>
+        <p class="eyebrow">Twins in motion</p>
+        <h2>See them at work.</h2>
+        <p class="lede mt-3">Short films of what we build: the Data Lab, twins of a village, a house and a wind farm, and the tools behind them.</p>
+      </div>
+      <div class="films__grid">
+        {films.map((f) => (
+          <article class="film" data-reveal>
+            <button type="button" class="film__screen" data-watch-src={f.clip!.src} data-watch-poster={f.clip!.poster} data-watch-title={f.title} aria-label={`Watch the video: ${f.title}`}>
+              <video class="film__loop" src={f.clip!.loop} poster={f.clip!.poster} muted loop playsinline preload="none" aria-hidden="true" data-film-loop></video>
+              <span class="film__badge"><i></i>{f.id === 'data-space-and-data-labs' ? 'Data Space & Data Lab' : f.type === 'tool' ? 'Tool' : 'Digital twin'}</span>
+              <span class="film__play"><Icon name="play" size={22} />Watch the full video</span>
+            </button>
+            <div class="film__body">
+              <h3><a href={`/explore/${f.id}`}>{f.title}</a></h3>
+              <p>{f.summary}</p>
+              {f.features && <ul>{f.features.slice(0, 3).map((x) => <li>{x}</li>)}</ul>}
+            </div>
+          </article>
+        ))}
       </div>
     </div>
   </section>
@@ -178,6 +235,53 @@ const demos = byType('twin');
   </section>
 </Base>
 
+<script>
+  // Film loops: play only while on screen (and never with reduced motion or data saver).
+  {
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches || conn?.saveData;
+    const loops = document.querySelectorAll<HTMLVideoElement>('[data-film-loop]');
+    if (!still) {
+      const io = new IntersectionObserver((es) => es.forEach((e) => {
+        const v = e.target as HTMLVideoElement;
+        if (e.isIntersecting) { v.preload = 'auto'; v.play().catch(() => {}); } else v.pause();
+      }), { threshold: 0.25 });
+      loops.forEach((v) => io.observe(v));
+    }
+  }
+
+  // Hero background film: a montage of our own twins (public/media/hero-montage*.mp4), muted and
+  // looping. Smaller file on small screens; only the still image for reduced motion or data saver.
+  const film = document.querySelector<HTMLElement>('[data-film]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-film-toggle]');
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches || conn?.saveData;
+  if (film && !calm) {
+    const v = document.createElement('video');
+    v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
+    v.setAttribute('muted', '');
+    v.poster = film.dataset.poster!;
+    v.src = innerWidth < 768 ? film.dataset.srcSm! : film.dataset.src!;
+    v.addEventListener('playing', () => film.classList.add('is-on'), { once: true });
+    film.append(v);
+    v.play().catch(() => {});
+    if (toggle) {
+      toggle.hidden = false;
+      toggle.addEventListener('click', () => {
+        const paused = toggle.getAttribute('aria-pressed') === 'true';
+        if (paused) v.play().catch(() => {}); else v.pause();
+        toggle.setAttribute('aria-pressed', String(!paused));
+        toggle.textContent = paused ? 'Pause background' : 'Play background';
+      });
+    }
+    // Pause the background while a full video plays in the window, resume after.
+    document.addEventListener('video-dialog', (e) => {
+      if (toggle?.getAttribute('aria-pressed') === 'true') return;
+      if ((e as CustomEvent).detail === 'open') v.pause(); else v.play().catch(() => {});
+    });
+  }
+</script>
+
 <style>
   .head { max-width: 44rem; }
   .head h2 { margin-top: 0.75rem; }
@@ -185,15 +289,43 @@ const demos = byType('twin');
   /* Hero */
   .hero { position: relative; padding-block: 2.5rem 4rem; overflow: hidden; }
   .hero::before { content: ''; position: absolute; inset: -20% -10% auto auto; width: 60rem; height: 40rem; background: radial-gradient(closest-side, rgb(34 211 122 / 0.14), transparent); pointer-events: none; }
+  .hero__film { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: url(/media/hero-montage.jpg) center / cover no-repeat, var(--color-navy-deep); }
+  .hero__film :global(video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease; }
+  .hero__film.is-on :global(video) { opacity: 1; }
+  /* The veil keeps the text readable on the left and lets the film show through on the right. */
+  .hero__veil { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(246 249 248 / 0.95) 0%, rgb(246 249 248 / 0.9) 40%, rgb(246 249 248 / 0.2) 60%, rgb(246 249 248 / 0.04) 100%), linear-gradient(180deg, transparent 82%, var(--color-paper)); }
+  @media (max-width: 63.99rem) { .hero__veil { background: linear-gradient(180deg, rgb(246 249 248 / 0.9) 0%, rgb(246 249 248 / 0.8) 55%, rgb(246 249 248 / 0.6) 100%); } }
+  .hero__filmbar { position: absolute; left: 0; right: 0; bottom: 1.25rem; display: flex; justify-content: flex-end; align-items: center; gap: 0.625rem; z-index: 2; pointer-events: none; }
+  .hero__watch { pointer-events: auto; display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1.25rem 0.5rem 0.5rem; border: 0; border-radius: 999px; background: rgb(7 26 58 / 0.82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #fff; font: inherit; text-align: left; cursor: pointer; box-shadow: 0 18px 40px -18px rgb(7 26 58 / 0.8); transition: transform 250ms ease, background-color 250ms ease; }
+  .hero__watch:hover { transform: translateY(-2px); background: rgb(7 26 58 / 0.95); }
+  .hero__watch-play { position: relative; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: linear-gradient(135deg, var(--color-green), var(--color-teal)); }
+  .hero__watch-play::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 0 0 0 rgb(34 211 122 / 0.6); animation: hero-ring 2.2s ease-out infinite; }
+  @keyframes hero-ring { to { box-shadow: 0 0 0 14px rgb(34 211 122 / 0); } }
+  .hero__watch-text { display: grid; line-height: 1.25; }
+  .hero__watch-text strong { font-size: 0.9375rem; }
+  .hero__watch-text span { font-size: 0.75rem; color: #b6c6dc; }
+  .hero__filmbtn { pointer-events: auto; padding: 0.5rem 0.875rem; border-radius: 999px; border: 1px solid rgb(255 255 255 / 0.5); background: rgb(255 255 255 / 0.8); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--color-navy); cursor: pointer; }
+  .hero__filmbtn:hover { border-color: var(--color-green); }
+  .hero__filmbtn[hidden] { display: none; }
+  /* On small screens the intro button sits in the hero actions instead. */
+  .hero__intro { display: none; }
+  @media (max-width: 63.99rem) { .hero__watch { display: none; } .hero__intro { display: inline-flex; } .hero__filmbar { bottom: 0.75rem; } }
+  /* twinlink OS section */
+  .osdemo { background: linear-gradient(180deg, var(--color-paper), var(--color-sky)); }
+  .osdemo__grid { display: grid; gap: 2.5rem; align-items: center; }
+  @media (min-width: 64rem) { .osdemo__grid { grid-template-columns: 4fr 7fr; gap: 3rem; } }
+  .osdemo .head h2 { margin-top: 0.75rem; }
+  .osdemo__twin { min-width: 0; }
+  .osdemo__points { display: grid; gap: 0.75rem; margin: 1.5rem 0 0; padding: 0; list-style: none; }
+  .osdemo__points li { display: grid; gap: 0.125rem; padding: 0.75rem 1rem; border-radius: 1rem; background: var(--color-surface); border: 1px solid var(--color-line); font-size: 0.9375rem; color: var(--color-muted); }
+  .osdemo__points span { font-weight: 700; color: var(--color-navy); }
   .hero__grid { position: relative; display: grid; gap: 2.5rem; align-items: center; }
-  @media (min-width: 64rem) { .hero__grid { grid-template-columns: 5fr 6fr; gap: 3rem; } .hero { padding-block: 3.5rem 5rem; } }
+  @media (min-width: 64rem) { .hero__grid { grid-template-columns: minmax(0, 36rem); gap: 3rem; } .hero { padding-block: 3.5rem 6.5rem; } }
   .hero__title { margin-top: 1rem; }
   .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
-  .hero__map-label { display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-navy); }
-  .hero__map-label span { width: 8px; height: 8px; border-radius: 50%; background: var(--color-green); box-shadow: 0 0 0 4px rgb(18 183 106 / 0.2); }
 
   /* Try it */
-  .try { background: var(--color-navy-deep); color: #e6eef8; }
+  .try { background: var(--color-navy-deep); color: #e6eef8; padding-top: 0; }
   .try .eyebrow { color: var(--color-green-bright); }
   .try h2 { color: #fff; }
   .try .lede { color: #b6c6dc; }
@@ -226,6 +358,35 @@ const demos = byType('twin');
   .tcard h3 { margin-top: 0.5rem; color: #fff; }
   .tcard h3 a { text-decoration: none; }
   .tcard .text-muted { color: #b6c6dc; }
+
+  /* Films */
+  /* Films and Try it share one dark band: films first, Try it continues below. */
+  .films { background: var(--color-navy-deep); color: #e6eef8; }
+  .films .eyebrow { color: var(--color-green-bright); }
+  .films h2 { color: #fff; }
+  .films .lede { color: #b6c6dc; }
+  .films__grid { display: grid; grid-auto-rows: 1fr; gap: 1.25rem; margin-top: 2.5rem; }
+  @media (min-width: 48rem) { .films__grid { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 64rem) { .films__grid { grid-template-columns: repeat(3, 1fr); } }
+  /* Every card the same size: equal rows, body fills the rest. */
+  .film { display: flex; flex-direction: column; height: 100%; border-radius: 1.5rem; overflow: hidden; background: #0f2a55; border: 1px solid rgb(255 255 255 / 0.08); }
+  .film__screen { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; padding: 0; border: 0; background: #000; cursor: pointer; overflow: hidden; }
+  .film__loop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.12); transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .film__screen:hover .film__loop { transform: scale(1.16); }
+  .film__screen::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(5 15 34 / 0.75)); }
+  .film__badge { position: absolute; z-index: 1; left: 0.875rem; top: 0.875rem; display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 999px; background: rgb(7 26 58 / 0.75); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #fff; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .film__badge i { width: 7px; height: 7px; border-radius: 50%; background: var(--color-green-bright); }
+  .film__play { position: absolute; z-index: 1; left: 0.875rem; bottom: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem 0.5rem 0.625rem; border-radius: 999px; background: rgb(255 255 255 / 0.95); color: var(--color-navy); font-size: 0.875rem; font-weight: 700; transition: transform 250ms ease; }
+  .film__screen:hover .film__play { transform: translateY(-2px); }
+  .film__body { flex: 1; display: flex; flex-direction: column; padding: 1.25rem 1.5rem 1.5rem; }
+  .film__body p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .film__body ul { margin-top: auto !important; padding-top: 0.875rem !important; }
+  .film h3 { color: #fff; }
+  .film h3 a { text-decoration: none; }
+  .film h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .film__body p { margin-top: 0.375rem; color: #b6c6dc; font-size: 0.9375rem; }
+  .film__body ul { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0.875rem 0 0; padding: 0; list-style: none; }
+  .film__body li { padding: 0.2rem 0.6rem; border-radius: 999px; background: rgb(255 255 255 / 0.08); color: #d6e4f5; font-size: 0.8125rem; font-weight: 600; }
 
   /* Themes */
   .themes__grid { display: grid; gap: 1rem; margin-top: 2.5rem; }

@@ -14,13 +14,15 @@ const type = typeOf(item.type);
   </div>
   <h3 class="icard__title"><a href={`/explore/${item.id}`}>{item.title}</a></h3>
   <p class="icard__summary">{item.summary}</p>
-  <ul class="icard__themes">{item.themes.slice(0, 3).map((t) => <li>{themeOf(t).label}</li>)}</ul>
+  {item.themes.length > 0 && <ul class="icard__themes">{item.themes.slice(0, 3).map((t) => <li>{themeOf(t).label}</li>)}</ul>}
   <div class="icard__actions">
     {item.demo
       ? <button type="button" class="btn btn--green btn--sm" data-demo={item.demo} data-demo-title={item.title}><Icon name="play" size={18} />Try it</button>
+      : item.clip
+      ? <button type="button" class="btn btn--green btn--sm" data-watch-src={item.clip.src} data-watch-poster={item.clip.poster} data-watch-title={item.title}><Icon name="play" size={18} />Watch it</button>
       : item.link
         ? <a class="btn btn--ghost btn--sm" href={item.link} target="_blank" rel="noopener">Visit<Icon name="external" size={16} /></a>
-        : <a class="link-arrow" href={`/explore/${item.id}`}>{item.refs ? 'See the research' : 'Read more'}</a>}
+        : <a class="link-arrow" href={`/explore/${item.id}`}>{item.video ? 'Watch the video' : item.refs ? 'See the research' : 'Read more'}</a>}
   </div>
 </article>
 

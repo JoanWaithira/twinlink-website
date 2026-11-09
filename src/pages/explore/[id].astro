@@ -8,10 +8,12 @@ import Icon from '../../components/Icon.astro';
 import { items, scales, themeOf, typeOf, type Item } from '../../content/catalog';
 import { Image } from 'astro:assets';
 const shots = import.meta.glob<{ default: ImageMetadata }>('../../assets/demos/*.png', { eager: true });
+const pics = import.meta.glob<{ default: ImageMetadata }>('../../assets/geohub/*.avif', { eager: true });
 export function getStaticPaths() { return items.map((i) => ({ params: { id: i.id } })); }
 const item = items.find((i) => i.id === Astro.params.id) as Item;
 const type = typeOf(item.type);
 const shot = item.preview ? Object.entries(shots).find(([p]) => p.endsWith(`/${item.preview}.png`))?.[1].default : undefined;
+const pic = item.image ? Object.entries(pics).find(([p]) => p.endsWith(`/${item.image}.avif`))?.[1].default : undefined;
 // Related: share a theme, other items first, the same type before others.
 const related = items
   .filter((i) => i.id !== item.id && i.themes.some((t) => item.themes.includes(t)))
@@ -22,9 +24,10 @@ const related = items
   <PageHead eyebrow={type.label} title={item.title} intro={item.summary} crumbs={[{ label: type.plural, href: type.href }, { label: item.title, href: `/explore/${item.id}` }]}>
     <ul class="facts">
       {item.status && <li><span>Status</span>{item.status}</li>}
+      {item.place && <li><span>Where</span>{item.place}</li>}
       {item.source && <li><span>From</span><a href={item.source.url} target="_blank" rel="noopener">{item.source.label}</a></li>}
       <li><span>Scale</span>{scales[item.scale]}</li>
-      <li><span>Themes</span>{item.themes.map((t) => themeOf(t).label).join(', ')}</li>
+      {item.themes.length > 0 && <li><span>Themes</span>{item.themes.map((t) => themeOf(t).label).join(', ')}</li>}
     </ul>
   </PageHead>
 
@@ -45,13 +48,22 @@ const related = items
             </div>
           </div>
         )}
+        {item.clip && (
+          <div class="clip">
+            <video controls playsinline preload="none" poster={item.clip.poster} src={item.clip.src} aria-label={`Video: ${item.title}`}></video>
+          </div>
+        )}
         {item.video && (
           <div class="video">
+            {pic && <Image src={pic} alt="" widths={[800, 1400]} sizes="(min-width: 64rem) 60vw, 100vw" class="video__poster" />}
             <button type="button" class="video__start" data-video={item.video} aria-label={`Play the video about ${item.title}`}>
               <span class="live__play"><Icon name="play" size={30} /></span>
               <span class="live__text"><strong>Play the video</strong><span>Loads from YouTube (privacy-enhanced mode) when you press play.</span></span>
             </button>
           </div>
+        )}
+        {!item.video && !item.demo && pic && (
+          <figure class:list={['pic', item.logo && 'pic--logo']}><Image src={pic} alt={item.logo ? `${item.title} logo` : ''} widths={[800, 1400]} sizes="(min-width: 64rem) 60vw, 100vw" /></figure>
         )}
         <div class="prose">
           {(item.body ?? [item.summary]).map((p) => <p>{p}</p>)}
@@ -80,12 +92,19 @@ const related = items
           <p class="mt-2 text-[0.9375rem] text-muted">Tell us about your place, and we will help you get started.</p>
           <a href="/contact" class="btn btn--primary btn--sm mt-4">Get in touch</a>
         </div>
-        <div class="card mt-4">
+        {item.source && (
+          <div class="card mt-4">
+            <h2 class="text-[1.125rem]">More from the Geohub</h2>
+            <p class="mt-2 text-[0.9375rem] text-muted">All University of Twente Digital Twin Geohub projects, with their videos.</p>
+            <a href="/geohub" class="link-arrow mt-3">Open the Geohub</a>
+          </div>
+        )}
+        {item.themes.length > 0 && <div class="card mt-4">
           <h2 class="text-[1.125rem]">Themes</h2>
           <ul class="mt-3 grid gap-2">
             {item.themes.map((t) => <li><a class="link-arrow" href={`/themes/${t}`}>{themeOf(t).label}</a></li>)}
           </ul>
-        </div>
+        </div>}
       </aside>
     </div>
     {related.length > 0 && (
@@ -104,6 +123,13 @@ const related = items
   .detail { display: grid; gap: 2rem; }
   @media (min-width: 64rem) { .detail { grid-template-columns: 1fr 20rem; gap: 3rem; } }
   .live, .video { position: relative; margin-bottom: 2rem; border-radius: 1.5rem; overflow: hidden; background: radial-gradient(80% 90% at 50% 100%, #0f5f5a, #0a1f44); aspect-ratio: 16 / 10; }
+  .video { aspect-ratio: 16 / 9; }
+  .video__poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .video__start { background: linear-gradient(180deg, rgb(7 26 58 / 0.15), rgb(7 26 58 / 0.65)) !important; }
+  .pic { margin: 0 0 2rem; border-radius: 1.5rem; overflow: hidden; border: 1px solid var(--color-line); background: var(--color-surface); }
+  .pic img { display: block; width: 100%; height: auto; }
+  .pic--logo { max-width: 28rem; }
+  .pic--logo img { padding: 1.5rem; }
   .live__shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(1.05); animation: live-pan 24s ease-in-out infinite alternate; }
   @keyframes live-pan { from { transform: scale(1.04); } to { transform: scale(1.16) translate(-2%, -2%); } }
   .live__start { background: linear-gradient(180deg, rgb(7 26 58 / 0.25), rgb(7 26 58 / 0.7)) !important; }
@@ -114,6 +140,8 @@ const related = items
   .live__text { display: grid; gap: 0.25rem; }
   .live__text span { font-size: 0.875rem; color: #b6c6dc; }
   .live__bar { position: absolute; right: 0.75rem; bottom: 0.75rem; display: flex; gap: 0.5rem; }
+  .clip { margin-bottom: 2rem; border-radius: 1.5rem; overflow: hidden; background: #000; aspect-ratio: 16 / 9; }
+  .clip video { display: block; width: 100%; height: 100%; }
   .prose { display: grid; gap: 1rem; max-width: 44rem; font-size: 1.0625rem; }
   .features { display: grid; gap: 0.625rem; margin: 1.75rem 0 0; padding: 0; list-style: none; }
   @media (min-width: 40rem) { .features { grid-template-columns: 1fr 1fr; } }
@@ -145,6 +173,7 @@ const related = items
     f.src = `https://www.youtube-nocookie.com/embed/${b.dataset.video}?autoplay=1&rel=0`;
     f.title = b.getAttribute('aria-label') ?? 'Video';
     f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    b.parentElement!.querySelector('.video__poster')?.remove();
     b.replaceWith(f);
   }));
 </script>

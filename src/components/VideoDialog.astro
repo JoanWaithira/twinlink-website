@@ -1,0 +1,70 @@
+---
+// One window for every video: any element with data-watch="<YouTube id>" opens it here, with
+// sound. The video only loads from YouTube (privacy-enhanced mode) when the visitor asks for it.
+// Our own films: data-watch-src="/media/....mp4" (and data-watch-poster) play from the site itself.
+import Icon from './Icon.astro';
+---
+<dialog class="vid" data-video-dialog aria-labelledby="vid-title">
+  <div class="vid__bar">
+    <h2 id="vid-title" class="vid__title" data-video-title>Video</h2>
+    <a class="vid__open" data-video-open href="#" target="_blank" rel="noopener"><Icon name="external" size={18} /><span>YouTube</span></a>
+    <button type="button" class="vid__close" data-video-close aria-label="Close the video"><Icon name="close" /></button>
+  </div>
+  <div class="vid__frame" data-video-frame></div>
+</dialog>
+
+<style>
+  .vid { width: min(68rem, calc(100vw - 2rem)); padding: 0; border: 0; border-radius: 1.25rem; background: #050f22; color: #fff; box-shadow: 0 40px 120px -30px rgb(7 26 58 / 0.7); overflow: hidden; }
+  .vid[open] { animation: vid-in 380ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .vid::backdrop { background: rgb(5 15 34 / 0.8); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  @keyframes vid-in { from { opacity: 0; transform: translateY(16px) scale(0.98); } }
+  .vid__bar { display: flex; align-items: center; gap: 1rem; padding: 0.625rem 0.625rem 0.625rem 1.25rem; }
+  .vid__title { flex: 1; min-width: 0; font-size: 1rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vid__open { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; font-weight: 600; color: #b6c6dc; text-decoration: none; }
+  .vid__open:hover { color: #fff; }
+  @media (max-width: 40rem) { .vid__open span { display: none; } }
+  .vid__close { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 999px; border: 1px solid rgb(255 255 255 / 0.2); background: transparent; color: #fff; cursor: pointer; }
+  .vid__frame { position: relative; aspect-ratio: 16 / 9; background: #000; }
+  .vid__open[hidden] { display: none; }
+  .vid__frame :global(video) { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
+  .vid__frame :global(iframe) { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+</style>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('[data-video-dialog]')!;
+  const frame = dialog.querySelector<HTMLElement>('[data-video-frame]')!;
+  const title = dialog.querySelector<HTMLElement>('[data-video-title]')!;
+  const open = dialog.querySelector<HTMLAnchorElement>('[data-video-open]')!;
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-watch], [data-watch-src]');
+    if (!btn) return;
+    e.preventDefault();
+    const name = btn.dataset.watchTitle ?? 'Video';
+    title.textContent = name;
+    if (btn.dataset.watchSrc) {
+      open.hidden = true;
+      const v = document.createElement('video');
+      v.src = btn.dataset.watchSrc;
+      if (btn.dataset.watchPoster) v.poster = btn.dataset.watchPoster;
+      v.controls = true; v.autoplay = true; v.playsInline = true;
+      v.setAttribute('aria-label', name);
+      frame.replaceChildren(v);
+    } else {
+      const id = btn.dataset.watch!;
+      open.hidden = false;
+      open.href = `https://www.youtube.com/watch?v=${id}`;
+      const f = document.createElement('iframe');
+      f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
+      f.title = name;
+      f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      f.allowFullscreen = true;
+      frame.replaceChildren(f);
+    }
+    dialog.showModal();
+    document.dispatchEvent(new CustomEvent('video-dialog', { detail: 'open' }));
+  });
+  const close = () => dialog.close();
+  dialog.querySelector('[data-video-close]')!.addEventListener('click', close);
+  dialog.addEventListener('close', () => { frame.replaceChildren(); document.dispatchEvent(new CustomEvent('video-dialog', { detail: 'close' })); });
+  dialog.addEventListener('click', (e) => { if (e.target === dialog) close(); });
+</script>

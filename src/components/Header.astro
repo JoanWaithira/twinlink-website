@@ -38,6 +38,8 @@ const active = (href: string) => path === href || path.startsWith(href + '/');
   .hdr__nav a:not(.btn):hover { background: var(--color-mint); }
   .hdr__nav a[aria-current='page'] { color: #08744a; background: var(--color-mint); }
   .hdr__nav-cta, .hdr__menu { display: none; }
+  /* Laptop widths: tighter links so the whole menu and Contact fit on one line. */
+  @media (min-width: 64rem) and (max-width: 79.99rem) { .hdr__nav a:not(.btn) { padding: 0.5rem 0.5rem; font-size: 0.875rem; } }
   .hdr__cta { flex: none; }
 
   @media (max-width: 63.99rem) {

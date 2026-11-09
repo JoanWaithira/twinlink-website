@@ -1,0 +1,61 @@
+---
+// A link to the Digital Twin Geohub page. With `showcase`, it also shows every Geohub project in
+// the order of the UT page (play opens the video window; the picture or title opens the project).
+import Icon from './Icon.astro';
+import { geohub, getItem, type Item } from '../content/catalog';
+import { Image } from 'astro:assets';
+interface Props { showcase?: boolean }
+const { showcase = false } = Astro.props;
+const pics = import.meta.glob<{ default: ImageMetadata }>('../assets/geohub/*.avif', { eager: true });
+const picFor = (name?: string) => name ? Object.entries(pics).find(([p]) => p.endsWith(`/${name}.avif`))?.[1].default : undefined;
+const picks = showcase ? geohub.entries.map(([id]) => getItem(id) as Item) : [];
+---
+<div class="ghb">
+  <a href="/geohub" class="ghb__banner">
+    <span class="ghb__icon"><Icon name="research" size={26} /></span>
+    <span class="ghb__text"><strong>{geohub.name}</strong><span>{geohub.entries.length} research projects from the University of Twente, with videos and papers, on one page.</span></span>
+    <span class="link-arrow">Open the Geohub</span>
+  </a>
+  {picks.length > 0 && (
+    <ul class="ghb__grid">
+      {picks.map((i) => (
+        <li class="ghb__card">
+          {i.video
+            ? <button type="button" class="ghb__media" data-watch={i.video} data-watch-title={i.title} aria-label={`Watch the video: ${i.title}`}>
+                {picFor(i.image) && <Image src={picFor(i.image)!} alt="" widths={[400, 640]} sizes="(min-width: 64rem) 25vw, (min-width: 40rem) 50vw, 100vw" class="ghb__img" loading="lazy" />}
+                <span class="ghb__play"><Icon name="play" size={20} /></span>
+              </button>
+            : <a href={`/explore/${i.id}`} class:list={['ghb__media', i.logo && 'ghb__media--logo']} tabindex="-1" aria-hidden="true">
+                {picFor(i.image) && <Image src={picFor(i.image)!} alt="" widths={[400, 640]} sizes="(min-width: 64rem) 25vw, (min-width: 40rem) 50vw, 100vw" class="ghb__img" loading="lazy" />}
+              </a>}
+          <p class="ghb__place">{i.place}</p>
+          <a class="ghb__title" href={`/explore/${i.id}`}>{i.title}</a>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
+<style>
+  .ghb { margin-bottom: 1.5rem; }
+  .ghb__banner { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.25rem; padding: 1.25rem 1.5rem; border-radius: 1.25rem; background: linear-gradient(135deg, var(--color-navy-deep), #0f3b6e 70%, #0e7f6a); color: #e6eef8; text-decoration: none; transition: transform 300ms ease, box-shadow 300ms ease; }
+  .ghb__banner:hover { transform: translateY(-3px); box-shadow: 0 22px 44px -28px rgb(7 26 58 / 0.7); }
+  .ghb__icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 1rem; background: rgb(255 255 255 / 0.1); color: var(--color-green-bright); }
+  .ghb__text { flex: 1; min-width: 14rem; display: grid; gap: 0.125rem; }
+  .ghb__text strong { font-size: 1.125rem; color: #fff; }
+  .ghb__text span { font-size: 0.9375rem; color: #b6c6dc; }
+  .ghb__banner .link-arrow { color: #fff; }
+  .ghb__grid { display: grid; gap: 1.5rem 1rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+  @media (min-width: 40rem) { .ghb__grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 64rem) { .ghb__grid { grid-template-columns: repeat(4, 1fr); } }
+  .ghb__card { display: grid; gap: 0.375rem; align-content: start; }
+  .ghb__media { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 9; padding: 0; border: 0; border-radius: 1rem; overflow: hidden; background: #0a1f44; cursor: pointer; }
+  .ghb__media--logo { background: #fff; border: 1px solid var(--color-line); }
+  .ghb__media--logo .ghb__img { object-fit: contain; padding: 1rem; }
+  .ghb__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .ghb__media:hover .ghb__img { transform: scale(1.05); }
+  .ghb__play { position: relative; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 50%; background: rgb(255 255 255 / 0.95); color: var(--color-navy); box-shadow: 0 0 0 7px rgb(255 255 255 / 0.18); }
+  .ghb__place { margin-top: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-teal); }
+  .ghb__title { font-weight: 700; line-height: 1.3; text-decoration: none; }
+  .ghb__title:hover { text-decoration: underline; text-underline-offset: 3px; }
+</style>

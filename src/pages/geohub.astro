@@ -1,0 +1,312 @@
+---
+// The University of Twente Digital Twin Geohub projects, as on the UT page (same projects, same
+// order, same pictures and videos), with a video reel, topic filters and links to the papers.
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { geohub, getItem, type Item } from '../content/catalog';
+import { Image } from 'astro:assets';
+const pics = import.meta.glob<{ default: ImageMetadata }>('../assets/geohub/*.avif', { eager: true });
+const picFor = (name?: string) => name ? Object.entries(pics).find(([p]) => p.endsWith(`/${name}.avif`))?.[1].default : undefined;
+const entries = geohub.entries.map(([id, topic]) => ({ item: getItem(id) as Item, topic }));
+const topicLabel = (id: string) => geohub.topics.find((t) => t.id === id)!.label;
+const videos = entries.filter((e) => e.item.video);
+const papers = entries.reduce((n, e) => n + (e.item.refs?.length ?? 0), 0);
+const firstUrl = (i: Item) => i.refs?.find((r) => r.url)?.url;
+const reel = videos[0].item;
+---
+<Base title="Digital Twin Geohub | twinlink.eu" description="Twenty digital twin research projects from the University of Twente Digital Twin Geohub: urban heat, traffic, floods, waste, 3D cities and infrastructure, with videos and papers.">
+  <!-- Head -->
+  <section class="gh-head">
+    <div class="container-site">
+      <nav class="gh-crumbs" aria-label="Breadcrumb">
+        <a href="/">Home</a><span aria-hidden="true">/</span><a href="/projects">Projects</a><span aria-hidden="true">/</span><a href="/geohub">Digital Twin Geohub</a>
+      </nav>
+      <div class="gh-head__grid">
+        <div>
+          <p class="eyebrow">Knowledge partner · {geohub.org}</p>
+          <h1 class="gh-head__title">{geohub.name}</h1>
+          <p class="gh-head__lede">Research projects where digital twins meet geo-information: hotter streets, safer floods, smarter waste rounds, 3D cities that build themselves. Each one with its paper, and many with a video.</p>
+          <div class="gh-head__actions">
+            <a href="#reel" class="btn btn--green"><Icon name="play" size={18} />Watch the videos</a>
+            <a href="#projects" class="btn gh-btn-light">See all projects</a>
+          </div>
+        </div>
+        <ul class="gh-stats" aria-label="In numbers">
+          <li><strong>{entries.length}</strong><span>projects</span></li>
+          <li><strong>{videos.length}</strong><span>videos</span></li>
+          <li><strong>{papers}</strong><span>papers & links</span></li>
+          <li><strong>{geohub.topics.length}</strong><span>topics</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Video reel: one big player and a playlist of every project video. -->
+  <section id="reel" class="gh-reel">
+    <div class="container-site">
+      <div class="gh-reel__grid">
+        <div class="gh-player" data-player>
+          <button type="button" class="gh-player__start" data-player-start={reel.video} data-player-title={reel.title} aria-label={`Play: ${reel.title}`}>
+            {picFor(reel.image) && <Image src={picFor(reel.image)!} alt="" widths={[640, 960, 1280]} sizes="(min-width: 64rem) 66vw, 100vw" class="gh-player__poster" data-player-poster />}
+            <span class="gh-player__play"><Icon name="play" size={34} /></span>
+          </button>
+          <div class="gh-player__cap">
+            <p class="gh-player__now">Now showing</p>
+            <h2 class="gh-player__title" data-player-heading>{reel.title}</h2>
+            <a class="gh-player__more" href={`/explore/${reel.id}`} data-player-link>About this project <span aria-hidden="true">→</span></a>
+          </div>
+        </div>
+        <div class="gh-list">
+          <p class="gh-list__head"><Icon name="play" size={16} />{videos.length} project videos</p>
+          <ol class="gh-list__items">
+            {videos.map(({ item }, i) => (
+              <li>
+                <button type="button" class:list={['gh-list__btn', i === 0 && 'is-on']} data-reel={item.video} data-reel-title={item.title} data-reel-id={item.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+                  <span class="gh-list__thumb">
+                    {picFor(item.image) && <Image src={picFor(item.image)!} alt="" width={160} class="gh-list__img" loading="lazy" />}
+                    <span class="gh-list__n">{i + 1}</span>
+                  </span>
+                  <span class="gh-list__text"><strong>{item.title}</strong><span>{item.place}</span></span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- All projects -->
+  <section id="projects" class="section gh-projects">
+    <div class="container-site">
+      <div class="gh-projects__head">
+        <div>
+          <p class="eyebrow">All projects</p>
+          <h2 class="mt-3">From one building to a whole island.</h2>
+        </div>
+        <p class="gh-count" aria-live="polite"><span data-gh-count>{entries.length}</span> of {entries.length} shown</p>
+      </div>
+      <div class="gh-filters" role="group" aria-label="Filter by topic">
+        <button type="button" data-gh-topic="" aria-pressed="true">All</button>
+        {geohub.topics.map((t) => <button type="button" data-gh-topic={t.id} aria-pressed="false">{t.label} <span>{entries.filter((e) => e.topic === t.id).length}</span></button>)}
+        <label class="gh-filters__video"><input type="checkbox" data-gh-video /> With video</label>
+      </div>
+
+      <div class="gh-grid">
+        {entries.map(({ item, topic }, i) => (
+          <article class:list={['gcard', i === 0 && 'gcard--wide']} data-gh-card data-topic={topic} data-has-video={item.video ? 'true' : 'false'}>
+            <div class:list={['gcard__media', item.logo && 'gcard__media--logo']}>
+              {picFor(item.image) && <Image src={picFor(item.image)!} alt={item.logo ? `${item.title} logo` : ''} widths={[480, 840]} sizes="(min-width: 64rem) 33vw, (min-width: 40rem) 50vw, 100vw" class="gcard__img" loading={i < 3 ? 'eager' : 'lazy'} />}
+              {item.video && (
+                <button type="button" class="gcard__play" data-watch={item.video} data-watch-title={item.title} aria-label={`Watch the video: ${item.title}`}>
+                  <span><Icon name="play" size={26} /></span>
+                </button>
+              )}
+              <span class="gcard__topic">{topicLabel(topic)}</span>
+            </div>
+            <div class="gcard__body">
+              {item.place && <p class="gcard__place"><Icon name="pin" size={14} />{item.place}</p>}
+              <h3 class="gcard__title"><a href={`/explore/${item.id}`}>{item.title}</a></h3>
+              <p class="gcard__summary">{item.summary}</p>
+              <div class="gcard__actions">
+                {item.video && <button type="button" class="btn btn--green btn--sm" data-watch={item.video} data-watch-title={item.title}><Icon name="play" size={16} />Watch</button>}
+                {item.link
+                  ? <a class="btn btn--ghost btn--sm" href={item.link} target="_blank" rel="noopener">Project site<Icon name="external" size={15} /></a>
+                  : firstUrl(item) && <a class="btn btn--ghost btn--sm" href={firstUrl(item)} target="_blank" rel="noopener">{item.refs!.filter((r) => r.url).length > 1 ? 'Papers' : 'Paper'}<Icon name="external" size={15} /></a>}
+                <a class="link-arrow gcard__more" href={`/explore/${item.id}`}>Details</a>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+      <p class="gh-empty" data-gh-empty hidden>No project matches. Try another topic.</p>
+    </div>
+  </section>
+
+  <!-- Source and next step -->
+  <section class="section pt-0">
+    <div class="container-site">
+      <div class="gh-close">
+        <div>
+          <h2>Research you can build on.</h2>
+          <p class="mt-3">These projects come from the {geohub.name} at the {geohub.org}, a twinlink.eu knowledge partner. Want to reuse a method, or bring your own research here?</p>
+        </div>
+        <div class="gh-close__actions">
+          <a href="/contact" class="btn btn--green">Get in touch<Icon name="arrow" size={18} /></a>
+          <a href={geohub.url} target="_blank" rel="noopener" class="btn gh-btn-light">Original page at UT<Icon name="external" size={16} /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Reel: the playlist swaps the big player; the player loads YouTube only on play.
+  const player = document.querySelector<HTMLElement>('[data-player]');
+  const startBtn = player?.querySelector<HTMLButtonElement>('[data-player-start]');
+  const heading = player?.querySelector<HTMLElement>('[data-player-heading]');
+  const link = player?.querySelector<HTMLAnchorElement>('[data-player-link]');
+  const embed = (id: string, title: string) => {
+    if (!player || !startBtn) return;
+    player.querySelector('iframe')?.remove();
+    const f = document.createElement('iframe');
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
+    f.title = title;
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    f.allowFullscreen = true;
+    f.className = 'gh-player__frame';
+    startBtn.hidden = true;
+    startBtn.after(f);
+  };
+  startBtn?.addEventListener('click', () => embed(startBtn.dataset.playerStart!, startBtn.dataset.playerTitle!));
+  document.querySelectorAll<HTMLButtonElement>('[data-reel]').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('[data-reel]').forEach((x) => { x.classList.remove('is-on'); x.setAttribute('aria-pressed', 'false'); });
+    b.classList.add('is-on');
+    b.setAttribute('aria-pressed', 'true');
+    if (heading) heading.textContent = b.dataset.reelTitle!;
+    if (link) link.href = `/explore/${b.dataset.reelId}`;
+    if (startBtn) { startBtn.dataset.playerStart = b.dataset.reel!; startBtn.dataset.playerTitle = b.dataset.reelTitle!; }
+    embed(b.dataset.reel!, b.dataset.reelTitle!);
+    if (matchMedia('(max-width: 63.99rem)').matches) player?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+
+  // Filters: topic and "with video", kept in the address (?topic=heat&video=1).
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-gh-card]')];
+  const topicBtns = [...document.querySelectorAll<HTMLButtonElement>('[data-gh-topic]')];
+  const videoBox = document.querySelector<HTMLInputElement>('[data-gh-video]')!;
+  const count = document.querySelector<HTMLElement>('[data-gh-count]')!;
+  const empty = document.querySelector<HTMLElement>('[data-gh-empty]')!;
+  const params = new URLSearchParams(location.search);
+  let topic = params.get('topic') ?? '';
+  videoBox.checked = params.get('video') === '1';
+  const apply = () => {
+    let n = 0;
+    cards.forEach((c) => {
+      const show = (!topic || c.dataset.topic === topic) && (!videoBox.checked || c.dataset.hasVideo === 'true');
+      c.hidden = !show;
+      c.classList.toggle('gcard--wide', false);
+      if (show) n++;
+    });
+    // The first visible card gets the wide slot when nothing is filtered.
+    if (!topic && !videoBox.checked) cards[0]?.classList.add('gcard--wide');
+    topicBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ghTopic === topic)));
+    count.textContent = String(n);
+    empty.hidden = n > 0;
+    const q = new URLSearchParams();
+    if (topic) q.set('topic', topic);
+    if (videoBox.checked) q.set('video', '1');
+    history.replaceState(null, '', q.toString() ? `?${q}` : location.pathname);
+  };
+  topicBtns.forEach((b) => b.addEventListener('click', () => { topic = b.dataset.ghTopic!; apply(); }));
+  videoBox.addEventListener('change', apply);
+  if (topic || videoBox.checked) apply();
+</script>
+
+<style>
+  /* Head */
+  .gh-head { position: relative; padding-block: 2rem 3rem; color: #e6eef8; overflow: hidden; background:
+      radial-gradient(60% 90% at 90% 0%, rgb(34 211 122 / 0.22), transparent 70%),
+      radial-gradient(50% 70% at 0% 100%, rgb(14 159 154 / 0.25), transparent 70%),
+      linear-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+      linear-gradient(90deg, rgb(255 255 255 / 0.04) 1px, transparent 1px) 0 0 / 32px 32px,
+      var(--color-navy-deep); }
+  @media (min-width: 48rem) { .gh-head { padding-block: 3rem 4rem; } }
+  .gh-crumbs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; font-size: 0.875rem; color: #8fa5c4; }
+  .gh-crumbs a { color: #8fa5c4; text-decoration: none; }
+  .gh-crumbs a:hover { color: #fff; text-decoration: underline; }
+  .gh-head .eyebrow { color: var(--color-green-bright); }
+  .gh-head__grid { display: grid; gap: 2rem; align-items: end; }
+  @media (min-width: 64rem) { .gh-head__grid { grid-template-columns: 1fr 24rem; gap: 3rem; } }
+  .gh-head__title { margin-top: 0.75rem; color: #fff; font-size: clamp(2.5rem, 5.4vw, 4rem); }
+  .gh-head__lede { margin-top: 1rem; max-width: 40rem; font-size: 1.125rem; color: #b6c6dc; }
+  .gh-head__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; }
+  .gh-btn-light { border-color: rgb(255 255 255 / 0.3); color: #fff; background: rgb(255 255 255 / 0.06); }
+  .gh-btn-light:hover { border-color: #fff; }
+  .gh-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
+  .gh-stats li { padding: 1rem 1.25rem; border-radius: 1.25rem; background: rgb(255 255 255 / 0.06); border: 1px solid rgb(255 255 255 / 0.1); }
+  .gh-stats strong { display: block; font-size: 2.25rem; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; color: #fff; }
+  .gh-stats span { font-size: 0.875rem; color: #b6c6dc; }
+
+  /* Reel */
+  .gh-reel { padding-block: 0 4rem; background: linear-gradient(180deg, var(--color-navy-deep) 0 45%, var(--color-paper) 45%); }
+  .gh-reel__grid { display: grid; gap: 1rem; }
+  @media (min-width: 64rem) { .gh-reel__grid { grid-template-columns: 2fr 1fr; gap: 1.25rem; } }
+  .gh-player { border-radius: 1.5rem; overflow: hidden; background: #050f22; box-shadow: 0 30px 70px -40px rgb(7 26 58 / 0.8); }
+  .gh-player__start { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 9; padding: 0; border: 0; cursor: pointer; background: #0a1f44; }
+  .gh-player__start[hidden] { display: none; }
+  .gh-player__poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .gh-player__start::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgb(5 15 34 / 0.6)); }
+  .gh-player__play { position: relative; z-index: 1; display: grid; place-items: center; width: 5.5rem; height: 5.5rem; border-radius: 50%; background: #fff; color: var(--color-navy); box-shadow: 0 0 0 14px rgb(255 255 255 / 0.18); transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .gh-player__start:hover .gh-player__play { transform: scale(1.1); }
+  .gh-player :global(.gh-player__frame) { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+  .gh-player__cap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1rem; padding: 1rem 1.25rem 1.25rem; }
+  .gh-player__now { width: 100%; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-green-bright); }
+  .gh-player__title { flex: 1; font-size: 1.25rem; color: #fff; }
+  .gh-player__more { font-size: 0.9375rem; font-weight: 600; color: #b6c6dc; text-decoration: none; }
+  .gh-player__more:hover { color: #fff; }
+  .gh-list { display: flex; flex-direction: column; min-height: 0; border-radius: 1.5rem; background: var(--color-surface); border: 1px solid var(--color-line); overflow: hidden; }
+  @media (min-width: 64rem) { .gh-list { max-height: 34rem; } }
+  .gh-list__head { display: flex; align-items: center; gap: 0.5rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-line); font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-navy); }
+  .gh-list__items { margin: 0; padding: 0.5rem; list-style: none; overflow-y: auto; }
+  .gh-list__btn { display: flex; gap: 0.75rem; align-items: center; width: 100%; padding: 0.5rem; border: 0; border-radius: 1rem; background: transparent; font: inherit; text-align: left; color: var(--color-ink); cursor: pointer; transition: background-color 200ms ease; }
+  .gh-list__btn:hover { background: var(--color-paper); }
+  .gh-list__btn.is-on { background: var(--color-mint); }
+  .gh-list__thumb { position: relative; flex: none; width: 6.5rem; aspect-ratio: 16 / 9; border-radius: 0.625rem; overflow: hidden; background: #0a1f44; }
+  .gh-list__img { width: 100%; height: 100%; object-fit: cover; }
+  .gh-list__n { position: absolute; left: 0.375rem; bottom: 0.375rem; display: grid; place-items: center; min-width: 1.375rem; height: 1.375rem; padding-inline: 0.25rem; border-radius: 999px; background: rgb(5 15 34 / 0.75); color: #fff; font-size: 0.75rem; font-weight: 700; }
+  .gh-list__btn.is-on .gh-list__n { background: var(--color-green); }
+  .gh-list__text { display: grid; gap: 0.125rem; min-width: 0; }
+  .gh-list__text strong { font-size: 0.9375rem; line-height: 1.3; }
+  .gh-list__text span { font-size: 0.8125rem; color: var(--color-muted); }
+
+  /* Projects */
+  .gh-projects { padding-top: 1rem; }
+  .gh-projects__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1rem; }
+  .gh-count { font-size: 0.9375rem; color: var(--color-muted); }
+  .gh-count span { font-weight: 700; color: var(--color-ink); }
+  .gh-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 1.5rem; padding: 0.75rem; border-radius: 1.25rem; background: var(--color-surface); border: 1px solid var(--color-line); }
+  .gh-filters button { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--color-ink); cursor: pointer; transition: all 200ms ease; }
+  .gh-filters button span { font-size: 0.75rem; color: var(--color-muted); }
+  .gh-filters button:hover { border-color: var(--color-green); }
+  .gh-filters button[aria-pressed='true'] { background: var(--color-navy); border-color: var(--color-navy); color: #fff; }
+  .gh-filters button[aria-pressed='true'] span { color: #b6c6dc; }
+  .gh-filters__video { display: inline-flex; align-items: center; gap: 0.5rem; margin-left: auto; padding: 0.45rem 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+  .gh-filters__video input { width: 1.125rem; height: 1.125rem; accent-color: var(--color-green); }
+  .gh-grid { display: grid; gap: 1.25rem; margin-top: 1.5rem; }
+  @media (min-width: 40rem) { .gh-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 64rem) { .gh-grid { grid-template-columns: repeat(3, 1fr); } }
+  .gcard { position: relative; display: flex; flex-direction: column; border-radius: 1.25rem; border: 1px solid var(--color-line); background: var(--color-surface); overflow: hidden; transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease, border-color 300ms ease; }
+  .gcard:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--color-teal) 35%, var(--color-line)); box-shadow: 0 22px 44px -28px rgb(14 159 154 / 0.6); }
+  .gcard[hidden] { display: none; }
+  @media (min-width: 64rem) {
+    .gcard--wide { grid-column: span 2; flex-direction: row; }
+    .gcard--wide .gcard__media { flex: 1.3; aspect-ratio: auto; min-height: 100%; }
+    .gcard--wide .gcard__body { flex: 1; justify-content: center; padding: 2rem; }
+    .gcard--wide .gcard__title { font-size: 1.5rem; }
+  }
+  .gcard__media { position: relative; aspect-ratio: 840 / 476; background: #0a1f44; overflow: hidden; }
+  .gcard__media--logo { background: #fff; border-bottom: 1px solid var(--color-line); }
+  .gcard__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .gcard__media--logo .gcard__img { object-fit: contain; padding: 1.5rem; }
+  .gcard:hover .gcard__img { transform: scale(1.05); }
+  .gcard__play { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border: 0; padding: 0; background: linear-gradient(180deg, transparent 40%, rgb(5 15 34 / 0.45)); cursor: pointer; }
+  .gcard__play span { display: grid; place-items: center; width: 3.75rem; height: 3.75rem; border-radius: 50%; background: rgb(255 255 255 / 0.95); color: var(--color-navy); box-shadow: 0 0 0 8px rgb(255 255 255 / 0.18); transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .gcard__play:hover span { transform: scale(1.12); }
+  .gcard__topic { position: absolute; z-index: 3; left: 0.75rem; top: 0.75rem; padding: 0.25rem 0.625rem; border-radius: 999px; background: rgb(5 15 34 / 0.75); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #fff; font-size: 0.75rem; font-weight: 700; pointer-events: none; }
+  .gcard__media--logo .gcard__topic { background: var(--color-sky); color: var(--color-navy); }
+  .gcard__body { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; padding: 1.25rem 1.5rem 1.5rem; }
+  .gcard__place { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-teal); }
+  .gcard__title { font-size: 1.1875rem; }
+  .gcard__title a { text-decoration: none; }
+  .gcard__title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .gcard__summary { font-size: 0.9375rem; color: var(--color-muted); }
+  .gcard__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: auto; padding-top: 0.75rem; }
+  .gcard__more { margin-left: auto; font-size: 0.9375rem; }
+  .gh-empty { margin-top: 2rem; text-align: center; color: var(--color-muted); }
+
+  /* Close */
+  .gh-close { display: grid; gap: 1.5rem; align-items: center; padding: 2.5rem 2rem; border-radius: 2rem; background: linear-gradient(135deg, var(--color-navy), #134a8e 60%, #0e7f6a); color: #e6eef8; }
+  @media (min-width: 48rem) { .gh-close { grid-template-columns: 1fr auto; padding: 3.5rem; } }
+  .gh-close h2 { color: #fff; }
+  .gh-close__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+</style>

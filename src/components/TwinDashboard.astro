@@ -1,0 +1,552 @@
+---
+// The hero visual: a live 3D city twin (three.js, src/lib/twin/engine.ts) inside an app window,
+// with glass panels for live data. Layers (Energy, Heat, Mobility) recolour the city; the
+// highlighted asset changes every few seconds. All numbers are illustrative.
+import Icon from './Icon.astro';
+---
+<div class="tdash" data-tdash>
+  <div class="tdash__bar">
+    <span class="tdash__brand"><span class="tdash__logo" aria-hidden="true"><i></i><i></i><i></i></span>twinlink<b>OS</b></span>
+    <div class="tdash__tabs" role="group" aria-label="Twin layer">
+      <button type="button" data-mode="energy" aria-pressed="true">Energy</button>
+      <button type="button" data-mode="heat" aria-pressed="false">Heat</button>
+      <button type="button" data-mode="mobility" aria-pressed="false">Mobility</button>
+    </div>
+    <span class="tdash__icons" aria-hidden="true">
+      <span class="tdash__ic"><Icon name="search" size={15} /></span>
+      <span class="tdash__ic tdash__ic--dot"><Icon name="pin" size={15} /></span>
+      <span class="tdash__avatar">TL</span>
+    </span>
+  </div>
+
+  <div class="tdash__view">
+    <div class="tdash__stage" data-tdash-stage aria-label="3D model of the pilot area" role="img"></div>
+
+    <div class="tdash__ui">
+      <!-- Clock and place -->
+      <div class="glass tdash__clock">
+        <p class="tdash__time" data-tdash-time>--:--:--</p>
+        <p class="tdash__date" data-tdash-date></p>
+        <p class="tdash__place"><Icon name="pin" size={13} />Almelo · pilot area</p>
+      </div>
+      <p class="tdash__live"><i></i>Live twin · illustrative data</p>
+
+      <!-- Right column -->
+      <div class="tdash__col">
+        <section class="glass tdash__panel">
+          <header><h3 data-tdash-ptitle>Building energy</h3><span class="tdash__pill">Real time</span></header>
+          <dl class="tdash__kpis">
+            <div><dt data-k="0">Peak today</dt><dd data-v="0">580 kW</dd></div>
+            <div><dt data-k="1">Load</dt><dd data-v="1">412 kW</dd></div>
+            <div><dt data-k="2">Alerts</dt><dd data-v="2">2</dd></div>
+          </dl>
+          <svg class="tdash__chart" viewBox="0 0 200 64" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="tdash-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#38bdf8" stop-opacity="0.45" /><stop offset="1" stop-color="#38bdf8" stop-opacity="0" /></linearGradient>
+            </defs>
+            <g class="tdash__gridlines"><line x1="0" x2="200" y1="16" y2="16" /><line x1="0" x2="200" y1="32" y2="32" /><line x1="0" x2="200" y1="48" y2="48" /></g>
+            <path data-tdash-area fill="url(#tdash-fill)" />
+            <path data-tdash-line class="tdash__line" />
+            <circle data-tdash-dot r="2.6" class="tdash__dot" />
+          </svg>
+          <p class="tdash__note" data-tdash-note>▲ 8% above forecast: cold front expected tonight.</p>
+        </section>
+
+        <section class="glass tdash__panel tdash__health">
+          <header><h3 data-tdash-htitle>Systems health</h3></header>
+          <ul data-tdash-bars>
+            <li><span>HVAC efficiency</span><b>82%</b><i style="--v: 82%"></i></li>
+            <li><span>Solar yield</span><b>64%</b><i style="--v: 64%"></i></li>
+            <li><span>Grid stability</span><b>91%</b><i style="--v: 91%"></i></li>
+          </ul>
+        </section>
+
+        <section class="glass tdash__panel tdash__mix">
+          <header><h3 data-tdash-dtitle>Energy mix</h3></header>
+          <div class="tdash__mixrow">
+            <svg viewBox="0 0 42 42" class="tdash__donut" aria-hidden="true" data-tdash-donut>
+              <circle cx="21" cy="21" r="15.9" class="tdash__donut-bg" />
+            </svg>
+            <ul data-tdash-legend></ul>
+          </div>
+        </section>
+      </div>
+
+      <!-- Minimap and zoom -->
+      <div class="tdash__mapbox">
+        <div class="tdash__zoom">
+          <button type="button" data-zoom="in" aria-label="Zoom in">+</button>
+          <button type="button" data-zoom="out" aria-label="Zoom out">−</button>
+        </div>
+        <button type="button" class="glass tdash__mini" data-tdash-next aria-label="Next asset">
+          <svg viewBox="0 0 60 60" aria-hidden="true" data-tdash-mini></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  type Mode = 'energy' | 'heat' | 'mobility';
+  const root = document.querySelector<HTMLElement>('[data-tdash]');
+  if (root) {
+    const stage = root.querySelector<HTMLElement>('[data-tdash-stage]')!;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = <T extends Element = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+
+    // ---- Content per layer (illustrative) ---------------------------------------------------
+    const assets = [
+      { name: 'Town hall', id: 'AL-01', lot: [2, 2, 1, 0] as const, h: 4.6 },
+      { name: 'Station quarter', id: 'AL-14', lot: [4, 1, 0, 1] as const, h: 5.4 },
+      { name: 'Public library', id: 'AL-22', lot: [1, 4, 1, 1] as const, h: 3.8 },
+    ];
+    const layers: Record<Mode, {
+      title: string; k: [string, string, string]; base: number; unit: string; note: string; spread: number;
+      health: [string, string]; bars: [string, number][]; mix: string; slices: [string, number, string][];
+      label: (a: typeof assets[number], v: number) => [string, string][];
+      fmt: (v: number) => string; peak: (v: number) => string; third: string;
+    }> = {
+      energy: {
+        title: 'Building energy', k: ['Peak today', 'Load', 'Alerts'], base: 412, spread: 34, unit: 'kW',
+        fmt: (v) => `${Math.round(v)} kW`, peak: () => '580 kW', third: '2',
+        note: '▲ 8% above forecast: cold front expected tonight.',
+        health: ['Systems health', ''], bars: [['HVAC efficiency', 82], ['Solar yield', 64], ['Grid stability', 91]],
+        mix: 'Energy mix', slices: [['Grid', 45, '#1d4ed8'], ['Solar', 25, '#38bdf8'], ['Heat pump', 20, '#22d37a'], ['Other', 10, '#cbd5e1']],
+        label: (a, v) => [['Consumption', `${Math.round(v)} kW ↑`], ['Solar on roof', '86 kW'], ['Indoor', '21.4 °C']],
+      },
+      heat: {
+        title: 'Heat stress', k: ['Surface max', 'Felt (PET)', 'Hotspots'], base: 36.8, spread: 1.6, unit: '°C',
+        fmt: (v) => `${v.toFixed(1)} °C`, peak: () => '44.2 °C', third: '7',
+        note: '🌳 24 street trees would cool this block by about 1.5 °C.',
+        health: ['Cooling capacity', ''], bars: [['Tree canopy', 18], ['Cool roofs', 34], ['Shade on paths', 41]],
+        mix: 'Land cover', slices: [['Paved', 52, '#f97316'], ['Roofs', 28, '#fbbf24'], ['Green', 15, '#22d37a'], ['Water', 5, '#38bdf8']],
+        label: (a, v) => [['Roof surface', '44 °C'], ['Felt temperature', `${v.toFixed(1)} °C`], ['Shade', '12%']],
+      },
+      mobility: {
+        title: 'Traffic flow', k: ['Peak hour', 'Vehicles / h', 'Incidents'], base: 1240, spread: 90, unit: '',
+        fmt: (v) => Math.round(v).toLocaleString('en'), peak: () => '1,860', third: '1',
+        note: '🚲 Bike traffic up 14% since the new cycle lane opened.',
+        health: ['Network health', ''], bars: [['Signal timing', 88], ['Bike share free', 57], ['Parking free', 23]],
+        mix: 'How people travel', slices: [['Car', 45, '#1d4ed8'], ['Bike', 30, '#22d37a'], ['Walk', 15, '#38bdf8'], ['Bus & train', 10, '#a78bfa']],
+        label: (a, v) => [['Visitors / h', `${Math.round(v / 4)}`], ['Bikes parked', '140'], ['Next bus', '3 min']],
+      },
+    };
+
+    let mode: Mode = 'energy';
+    let assetIx = 0;
+    let value = layers.energy.base;
+    const series: number[] = Array.from({ length: 48 }, (_, i) => layers.energy.base + Math.sin(i / 4) * 30 + Math.sin(i / 1.7) * 12);
+
+    // ---- Clock ------------------------------------------------------------------------------
+    const time = $('[data-tdash-time]'), date = $('[data-tdash-date]');
+    const tick = () => {
+      const d = new Date();
+      time.textContent = d.toLocaleTimeString('en-GB', { hour12: false });
+      date.textContent = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+    };
+    tick();
+    setInterval(tick, 1000);
+
+    // ---- Panels -------------------------------------------------------------------------------
+    const area = $<SVGPathElement>('[data-tdash-area]'), line = $<SVGPathElement>('[data-tdash-line]'), dot = $<SVGCircleElement>('[data-tdash-dot]');
+    const drawChart = () => {
+      const L = layers[mode];
+      const lo = L.base - L.spread * 2.2, hi = L.base + L.spread * 2.2;
+      const pts = series.map((v, i) => [i * (200 / (series.length - 1)), 60 - ((v - lo) / (hi - lo)) * 52] as const);
+      const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+      line.setAttribute('d', d);
+      area.setAttribute('d', `${d} L200 64 L0 64 Z`);
+      const [lx, ly] = pts[pts.length - 1];
+      dot.setAttribute('cx', String(lx)); dot.setAttribute('cy', String(ly));
+    };
+    const donut = $<SVGSVGElement>('[data-tdash-donut]'), legend = $('[data-tdash-legend]');
+    const drawMix = () => {
+      const L = layers[mode];
+      donut.querySelectorAll('.tdash__slice').forEach((n) => n.remove());
+      legend.replaceChildren();
+      let off = 25;
+      for (const [name, pct, color] of L.slices) {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        c.setAttribute('cx', '21'); c.setAttribute('cy', '21'); c.setAttribute('r', '15.9');
+        c.setAttribute('class', 'tdash__slice');
+        c.setAttribute('stroke', color);
+        c.setAttribute('stroke-dasharray', `${pct - 1.2} ${100 - pct + 1.2}`);
+        c.setAttribute('stroke-dashoffset', String(off));
+        donut.append(c);
+        off -= pct;
+        const li = document.createElement('li');
+        li.innerHTML = `<i style="background:${color}"></i><span></span><b>${pct}%</b>`;
+        li.querySelector('span')!.textContent = name;
+        legend.append(li);
+      }
+    };
+    const bars = $('[data-tdash-bars]');
+    const drawPanels = () => {
+      const L = layers[mode];
+      $('[data-tdash-ptitle]').textContent = L.title;
+      $('[data-tdash-htitle]').textContent = L.health[0];
+      $('[data-tdash-dtitle]').textContent = L.mix;
+      $('[data-tdash-note]').textContent = L.note;
+      L.k.forEach((k, i) => { $(`[data-k="${i}"]`).textContent = k; });
+      $('[data-v="0"]').textContent = L.peak(value);
+      $('[data-v="2"]').textContent = L.third;
+      bars.replaceChildren(...L.bars.map(([n, v]) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span></span><b>${v}%</b><i style="--v:${v}%"></i>`;
+        li.querySelector('span')!.textContent = n;
+        return li;
+      }));
+      drawMix();
+      drawChart();
+    };
+
+    // Label on the highlighted building (positioned by the 3D engine).
+    const labelEl = document.createElement('div');
+    labelEl.className = 'tdash-label';
+    labelEl.innerHTML = '<div class="tdash-label__card"><p class="tdash-label__title"></p><p class="tdash-label__ok"><i></i>System nominal</p><dl></dl></div>';
+    const drawLabel = () => {
+      const a = assets[assetIx];
+      labelEl.querySelector('.tdash-label__title')!.textContent = `${a.name} (asset #${a.id})`;
+      const dl = labelEl.querySelector('dl')!;
+      dl.replaceChildren(...layers[mode].label(a, value).map(([k, v]) => {
+        const row = document.createElement('div');
+        const dt = document.createElement('dt'); dt.textContent = k;
+        const dd = document.createElement('dd'); dd.textContent = v;
+        row.append(dt, dd);
+        return row;
+      }));
+    };
+
+    const live = () => {
+      const L = layers[mode];
+      value += (L.base - value) * 0.15 + (Math.random() - 0.5) * L.spread * 0.6;
+      series.push(value); series.shift();
+      $('[data-v="1"]').textContent = L.fmt(value);
+      drawChart();
+      drawLabel();
+    };
+
+    // Minimap: the 6 x 6 blocks, the active asset highlighted.
+    const mini = $<SVGSVGElement>('[data-tdash-mini]');
+    const drawMini = () => {
+      const a = assets[assetIx];
+      mini.innerHTML = Array.from({ length: 36 }, (_, n) => {
+        const i = n % 6, j = Math.floor(n / 6);
+        const on = i === a.lot[0] && j === a.lot[1];
+        const park = (i === 4 && j === 4) || (i === 0 && j === 1);
+        return `<rect x="${3 + i * 9.2}" y="${3 + j * 9.2}" width="7.4" height="7.4" rx="1.4" class="${on ? 'on' : park ? 'park' : ''}" />`;
+      }).join('');
+    };
+
+    drawPanels();
+    drawLabel();
+    drawMini();
+    if (!reduce) setInterval(live, 1200);
+
+    // ---- 3D -------------------------------------------------------------------------------------
+    let setMode: (m: Mode) => void = () => {};
+    let focusAsset: (i: number) => void = () => {};
+    let zoomBy: (f: number) => void = () => {};
+
+    const boot = async () => {
+      try {
+        const [{ createEngine }, T] = await Promise.all([import('../lib/twin/engine'), import('three')]);
+        const BLOCK = 5.5, OFF = -13.75;
+        const engine = createEngine(stage, {
+          intro: { a: 1.15, r: 70, h: 56, lx: 0, lz: 0 },
+          size: 36,
+          labelFloor: 0,
+          fov: [30, 40],
+          zoomFor: (w) => (w < 420 ? 0.82 : w < 600 ? 0.92 : 1),
+        });
+        // Seeded random, so the city is the same on every visit.
+        let seed = 7;
+        const rand = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+        // Roads.
+        const roadMat = new T.MeshStandardMaterial({ color: '#e6eef8', roughness: 1 });
+        for (let k = 0; k <= 6; k++) {
+          const p = -16.5 + k * BLOCK;
+          engine.addPlane(p, 0, 1.25, 34, 0.02, roadMat);
+          engine.addPlane(0, p, 34, 1.25, 0.021, roadMat);
+        }
+        const roofMat = new T.MeshStandardMaterial({ color: '#e2e8f0', roughness: 0.9 });
+        const parkMat = new T.MeshStandardMaterial({ color: '#c9ecd8', roughness: 1 });
+        const treeMat = new T.MeshStandardMaterial({ color: '#5fc48e', roughness: 0.8 });
+
+        // Buildings, each with its own material so layers can recolour them.
+        type B = { mesh: InstanceType<typeof T.Mesh>; mat: InstanceType<typeof T.MeshStandardMaterial>; heat: number; asset: number };
+        const blds: B[] = [];
+        const base = new T.Color('#f6f9fd');
+        for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) {
+          const cx = OFF + i * BLOCK, cz = OFF + j * BLOCK;
+          if ((i === 4 && j === 4) || (i === 0 && j === 1)) {
+            engine.addPlane(cx, cz, 4.1, 4.1, 0.03, parkMat);
+            for (let t = 0; t < 7; t++) {
+              const tr = engine.addBox(cx + (rand() - 0.5) * 3.2, cz + (rand() - 0.5) * 3.2, 0.5, 0.5, 0.5 + rand() * 0.5, treeMat, null);
+              tr.castShadow = true;
+            }
+            continue;
+          }
+          const d = Math.hypot(cx, cz);
+          const hasAsset = assets.some((a) => a.lot[0] === i && a.lot[1] === j);
+          // Each block gets its own layout: four lots, two slabs, one big building, or a tower on a podium.
+          const r = rand();
+          const lots: [number, number, number, number, number, number][] = []; // x, z, w, d, h, asset
+          const hFor = (k = 1) => (0.8 + rand() * 1.4 + Math.max(0, 4.2 - d * 0.2) * rand()) * k;
+          if (hasAsset || r < 0.45) {
+            for (let li = 0; li < 2; li++) for (let lj = 0; lj < 2; lj++) {
+              const ai = assets.findIndex((a) => a.lot[0] === i && a.lot[1] === j && a.lot[2] === li && a.lot[3] === lj);
+              lots.push([cx + (li - 0.5) * 2.05, cz + (lj - 0.5) * 2.05, 1.75, 1.75, ai >= 0 ? assets[ai].h : hFor(), ai]);
+            }
+          } else if (r < 0.7) {
+            const alongX = rand() > 0.5;
+            for (const o of [-1, 1]) lots.push(alongX ? [cx, cz + o * 1.03, 3.85, 1.7, hFor(0.8), -1] : [cx + o * 1.03, cz, 1.7, 3.85, hFor(0.8), -1]);
+          } else if (r < 0.85) {
+            lots.push([cx, cz, 3.85, 3.85, hFor(0.6), -1]);
+          } else {
+            lots.push([cx, cz, 3.85, 3.85, 0.7, -1]);
+            lots.push([cx + 0.4, cz - 0.4, 1.9, 1.9, 4.5 + rand() * 3.5 + Math.max(0, 3 - d * 0.15), -1]);
+          }
+          for (const [x, z, w, dd, h, ai] of lots) {
+            const mat = new T.MeshStandardMaterial({ color: base.clone(), roughness: 0.85, metalness: 0.05, emissive: '#f6f9fd', emissiveIntensity: 0.08, transparent: true, opacity: 1 });
+            const mesh = engine.addBox(x, z, w, dd, h, mat);
+            blds.push({ mesh, mat, heat: Math.min(1, Math.max(0, 0.75 - d * 0.03 + (rand() - 0.5) * 0.5 + h * 0.04)), asset: ai });
+            // Rooftop units on some buildings (not the assets, which get the glow).
+            if (ai < 0 && rand() < 0.45) {
+              // A child of the building, so it rises with it.
+              const u = engine.addBox(0, 0, w * 0.3, dd * 0.3, 0.3, roofMat);
+              mesh.add(u);
+              u.position.set((rand() - 0.5) * w * 0.4, h, (rand() - 0.5) * dd * 0.4);
+            }
+          }
+        }
+
+        // Cars on the roads (two lanes each way).
+        const carGeo = new T.BoxGeometry(0.42, 0.2, 0.22);
+        const carMat = new T.MeshStandardMaterial({ color: '#1d3f6e', emissive: '#38bdf8', emissiveIntensity: 0 });
+        const cars = Array.from({ length: 34 }, (_, n) => {
+          const m = new T.Mesh(carGeo, carMat);
+          const alongX = n % 2 === 0;
+          const road = -16.5 + (1 + Math.floor(rand() * 5)) * BLOCK;
+          const dir = rand() > 0.5 ? 1 : -1;
+          const c = { m, alongX, road, dir, pos: (rand() - 0.5) * 34, speed: 2 + rand() * 2.5 };
+          if (!alongX) m.rotation.y = Math.PI / 2;
+          engine.world.add(m);
+          return c;
+        });
+
+        // Highlight: glass material, bright outline, beam and a pulsing base plate.
+        const glass = new T.MeshStandardMaterial({ color: '#9fdcff', emissive: '#38bdf8', emissiveIntensity: 0.55, transparent: true, opacity: 0.72, roughness: 0.25, metalness: 0.1 });
+        const glassEdge = new T.LineBasicMaterial({ color: '#0ea5e9' });
+        const beamMat = new T.MeshBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0.35, depthWrite: false });
+        const beam = new T.Mesh(new T.CylinderGeometry(0.05, 0.05, 9, 8), beamMat);
+        const plateMat = new T.MeshBasicMaterial({ color: '#38bdf8', transparent: true, opacity: 0.25, depthWrite: false });
+        const plate = new T.Mesh(new T.PlaneGeometry(2.6, 2.6), plateMat);
+        plate.rotation.x = -Math.PI / 2;
+        engine.world.add(beam, plate);
+        const anchor = new T.Vector3();
+        const label = engine.addLabel(anchor, labelEl, 'right', 2.2);
+        // Same frame as the stage, but drawn above the panels.
+        root.querySelector('.tdash__ui')!.append(labelEl);
+        const ring = engine.addRing(new T.Vector3());
+
+        let radius = 42;
+        const viewFor = (i: number) => {
+          const m = blds.find((b) => b.asset === i)!.mesh;
+          // Aim to the right of the asset, so it sits left of centre and its label has room.
+          const a = 0.95 + i * 0.25, k = radius * 0.3;
+          return { a, r: radius, h: radius * 0.72, lx: m.position.x + Math.sin(a) * k, lz: m.position.z - Math.cos(a) * k };
+        };
+        focusAsset = (i: number) => {
+          assetIx = i;
+          for (const b of blds) {
+            const on = b.asset === i;
+            b.mesh.material = on ? glass : b.mat;
+            (b.mesh.children[0] as InstanceType<typeof T.LineSegments>).material = on ? glassEdge : engine.mats.edge;
+          }
+          const m = blds.find((b) => b.asset === i)!.mesh;
+          const h = assets[i].h;
+          anchor.set(m.position.x, h + 0.2, m.position.z);
+          label.anchor.copy(anchor);
+          ring.position.set(m.position.x, h + 0.2, m.position.z);
+          beam.position.set(m.position.x, h + 4.5, m.position.z);
+          plate.position.set(m.position.x, 0.04, m.position.z);
+          engine.moveTo(viewFor(i), 2200);
+          engine.scanNow(300);
+          drawLabel();
+          drawMini();
+        };
+        zoomBy = (f: number) => { radius = Math.min(Math.max(radius * f, 22), 60); engine.moveTo(viewFor(assetIx), 700); };
+
+        // Layer colours.
+        const heatCol = (x: number) => new T.Color().lerpColors(new T.Color(x < 0.5 ? '#dbeafe' : '#fde68a'), new T.Color(x < 0.5 ? '#fde68a' : '#f97316'), x < 0.5 ? x * 2 : (x - 0.5) * 2);
+        const targets = new Map<B, InstanceType<typeof T.Color>>();
+        setMode = (m: Mode) => {
+          mode = m;
+          for (const b of blds) targets.set(b, m === 'heat' ? heatCol(b.heat) : m === 'mobility' ? new T.Color('#eef2f7') : base.clone());
+          glass.color.set(m === 'heat' ? '#fdba74' : '#9fdcff');
+          glass.emissive.set(m === 'heat' ? '#f97316' : '#38bdf8');
+          glassEdge.color.set(m === 'heat' ? '#ea580c' : '#0ea5e9');
+          beamMat.color.set(m === 'heat' ? '#f97316' : '#38bdf8');
+          plateMat.color.set(m === 'heat' ? '#f97316' : '#38bdf8');
+          roadMat.color.set(m === 'mobility' ? '#cfe3fb' : '#e6eef8');
+          carMat.emissiveIntensity = m === 'mobility' ? 0.9 : 0;
+          carMat.color.set(m === 'mobility' ? '#0ea5e9' : '#1d3f6e');
+        };
+        setMode(mode);
+
+        engine.onFrame((t, dt) => {
+          for (const b of blds) {
+            const tc = targets.get(b);
+            if (tc) { b.mat.color.lerp(tc, 0.06); b.mat.emissive.copy(b.mat.color); }
+          }
+          for (const c of cars) {
+            c.pos += c.dir * c.speed * dt * (mode === 'mobility' ? 1.4 : 1);
+            if (c.pos > 17) c.pos = -17; if (c.pos < -17) c.pos = 17;
+            const lane = c.road + c.dir * 0.3;
+            if (c.alongX) c.m.position.set(c.pos, 0.12, lane); else c.m.position.set(lane, 0.12, c.pos);
+            c.m.scale.setScalar(mode === 'mobility' ? 1.35 : 1);
+          }
+          const p = (t * 0.6) % 1;
+          ring.scale.setScalar(1 + p * 5);
+          (ring.material as InstanceType<typeof T.MeshBasicMaterial>).opacity = 0.85 * (1 - p);
+          plateMat.opacity = 0.18 + Math.sin(t * 3) * 0.08;
+          beamMat.opacity = 0.25 + Math.sin(t * 2) * 0.1;
+        });
+        engine.keepShadowsLive();
+        engine.start();
+        engine.moveTo(viewFor(0), 2600);
+        focusAsset(0);
+        root.classList.add('is-3d');
+      } catch (err) {
+        // No WebGL: the panels still work over a flat backdrop.
+        root.classList.add('no-3d');
+        console.warn('3D twin unavailable', err);
+      }
+    };
+    const go = () => ('requestIdleCallback' in window ? requestIdleCallback(() => boot(), { timeout: 1200 }) : setTimeout(boot, 200));
+    if (document.readyState === 'complete') go(); else addEventListener('load', go, { once: true });
+
+    // ---- Controls ---------------------------------------------------------------------------
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-mode]')];
+    tabs.forEach((b) => b.addEventListener('click', () => {
+      const m = b.dataset.mode as Mode;
+      tabs.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      mode = m;
+      value = layers[m].base;
+      for (let i = 0; i < series.length; i++) series[i] = layers[m].base + Math.sin(i / 4) * layers[m].spread * 0.9 + Math.sin(i / 1.7) * layers[m].spread * 0.35;
+      setMode(m);
+      drawPanels();
+      live();
+    }));
+    root.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((b) => b.addEventListener('click', () => zoomBy(b.dataset.zoom === 'in' ? 0.85 : 1.18)));
+    const next = () => focusAsset((assetIx + 1) % assets.length);
+    $('[data-tdash-next]').addEventListener('click', next);
+    let hover = false;
+    root.addEventListener('pointerenter', () => { hover = true; });
+    root.addEventListener('pointerleave', () => { hover = false; });
+    if (!reduce) setInterval(() => { if (!hover && root.classList.contains('is-3d')) next(); }, 8000);
+  }
+</script>
+
+<style>
+  .tdash { --glass: rgb(255 255 255 / 0.74); --ink: #0b1f3a; --sub: #5b6b80; --cyan: #0ea5e9; container-type: inline-size; position: relative; border-radius: 1.25rem; overflow: hidden; background: #fafaf7; box-shadow: 0 50px 100px -40px rgb(7 26 58 / 0.55), 0 0 0 1px rgb(13 45 99 / 0.08); font-size: 12px; color: var(--ink); }
+
+  /* App bar */
+  .tdash__bar { display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 0.75rem; background: rgb(255 255 255 / 0.96); border-bottom: 1px solid rgb(13 45 99 / 0.08); }
+  .tdash__brand { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 800; font-size: 13px; letter-spacing: -0.01em; color: var(--color-navy); }
+  .tdash__brand b { margin-left: 0.15rem; padding: 0.05rem 0.3rem; border-radius: 0.3rem; background: var(--color-navy); color: #fff; font-size: 10px; letter-spacing: 0.06em; }
+  .tdash__logo { display: inline-grid; grid-template-columns: repeat(3, 4px); gap: 2px; align-items: end; }
+  .tdash__logo i { width: 4px; border-radius: 1px; background: linear-gradient(var(--cyan), var(--color-green)); }
+  .tdash__logo i:nth-child(1) { height: 8px; } .tdash__logo i:nth-child(2) { height: 13px; } .tdash__logo i:nth-child(3) { height: 10px; }
+  .tdash__tabs { display: flex; gap: 0.2rem; margin-inline: auto; padding: 0.2rem; border-radius: 0.6rem; background: #f1f5f9; }
+  .tdash__tabs button { padding: 0.3rem 0.7rem; border: 0; border-radius: 0.45rem; background: transparent; font: inherit; font-size: 12px; font-weight: 600; color: var(--sub); cursor: pointer; transition: all 200ms ease; }
+  .tdash__tabs button:hover { color: var(--ink); }
+  .tdash__tabs button[aria-pressed='true'] { background: linear-gradient(135deg, #3b82f6, var(--cyan)); color: #fff; box-shadow: 0 6px 14px -6px rgb(14 165 233 / 0.8); }
+  .tdash__icons { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--sub); }
+  .tdash__ic { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgb(13 45 99 / 0.1); position: relative; }
+  .tdash__ic--dot::after { content: ''; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; background: #f43f5e; }
+  .tdash__avatar { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--color-navy), var(--color-teal)); color: #fff; font-size: 10px; font-weight: 800; }
+  @container (max-width: 520px) { .tdash__icons { display: none; } .tdash__tabs { margin-right: 0; } }
+
+  /* View */
+  .tdash__view { position: relative; aspect-ratio: 4 / 3.15; overflow: hidden; }
+  @container (max-width: 520px) { .tdash__view { aspect-ratio: 4 / 4.9; } }
+  .tdash__stage { position: absolute; inset: 0; background:
+      linear-gradient(rgb(13 45 99 / 0.05) 1px, transparent 1px) 0 0 / 24px 24px,
+      linear-gradient(90deg, rgb(13 45 99 / 0.05) 1px, transparent 1px) 0 0 / 24px 24px, #fafaf7; }
+  .tdash__stage :global(canvas) { position: absolute; inset: 0; display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 900ms ease; }
+  .tdash:global(.is-3d) .tdash__stage :global(canvas) { opacity: 1; }
+  .tdash__ui { position: absolute; inset: 0; pointer-events: none; }
+  .tdash__ui > * { pointer-events: auto; }
+  .glass { background: var(--glass); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); border: 1px solid rgb(255 255 255 / 0.7); border-radius: 0.8rem; box-shadow: 0 14px 34px -18px rgb(7 26 58 / 0.45); }
+
+  .tdash__clock { position: absolute; left: 0.75rem; top: 0.75rem; padding: 0.55rem 0.7rem; }
+  .tdash__time { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .tdash__date { color: var(--sub); font-size: 10.5px; }
+  .tdash__place { display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.4rem; padding: 0.2rem 0.45rem; border-radius: 0.45rem; background: #fff; border: 1px solid rgb(13 45 99 / 0.08); font-weight: 600; font-size: 11px; }
+  .tdash__live { position: absolute; left: 50%; top: 0.75rem; translate: -50% 0; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.6rem; border-radius: 999px; background: rgb(7 26 58 / 0.78); color: #fff; font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+  .tdash__live i { width: 6px; height: 6px; border-radius: 50%; background: var(--color-green-bright); box-shadow: 0 0 0 0 rgb(34 211 122 / 0.6); animation: td-live 1.8s ease-out infinite; }
+  @keyframes td-live { to { box-shadow: 0 0 0 7px rgb(34 211 122 / 0); } }
+
+  /* Right column */
+  .tdash__col { position: absolute; right: 0.75rem; top: 0.75rem; bottom: 0.75rem; width: min(40%, 15rem); display: flex; flex-direction: column; gap: 0.5rem; overflow: hidden; }
+  .tdash__panel { padding: 0.6rem 0.7rem; }
+  .tdash__panel header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.4rem; }
+  .tdash__panel h3 { font-size: 12px; font-weight: 700; letter-spacing: 0; }
+  .tdash__pill { padding: 0.1rem 0.4rem; border-radius: 0.35rem; background: #fff; border: 1px solid rgb(13 45 99 / 0.1); font-size: 10px; font-weight: 600; color: var(--sub); }
+  .tdash__kpis { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 0.4rem; margin: 0; }
+  .tdash__kpis dd { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tdash__kpis dt { order: 2; font-size: 10px; color: var(--sub); }
+  .tdash__kpis div { display: flex; flex-direction: column-reverse; }
+  .tdash__chart { display: block; width: 100%; height: 56px; margin-top: 0.4rem; overflow: visible; }
+  .tdash__gridlines line { stroke: rgb(13 45 99 / 0.08); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .tdash__line { fill: none; stroke: #0ea5e9; stroke-width: 1.8; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .tdash__dot { fill: #fff; stroke: #0ea5e9; stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .tdash__note { margin-top: 0.35rem; padding: 0.35rem 0.45rem; border-radius: 0.45rem; background: rgb(14 165 233 / 0.1); color: #075985; font-size: 10.5px; line-height: 1.35; }
+  .tdash__health ul, .tdash__mix ul { margin: 0; padding: 0; list-style: none; }
+  .tdash__health :global(li) { display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 0.5rem; margin-top: 0.35rem; font-size: 10.5px; }
+  .tdash__health :global(li span) { color: var(--sub); }
+  .tdash__health :global(li i) { grid-column: 1 / -1; height: 5px; border-radius: 999px; background: linear-gradient(90deg, #3b82f6, #38bdf8) 0 0 / var(--v) 100% no-repeat, #e2e8f0; }
+  .tdash__mixrow { display: flex; align-items: center; gap: 0.6rem; }
+  .tdash__donut { flex: none; width: 58px; height: 58px; }
+  .tdash__donut-bg { fill: none; stroke: #e2e8f0; stroke-width: 6; }
+  .tdash__donut :global(.tdash__slice) { fill: none; stroke-width: 6; transition: stroke-dasharray 600ms ease; }
+  .tdash__mix :global(li) { display: grid; grid-template-columns: 8px 1fr auto; align-items: center; gap: 0.35rem; font-size: 10.5px; line-height: 1.6; }
+  .tdash__mix :global(li i) { width: 8px; height: 8px; border-radius: 50%; }
+  .tdash__mix :global(li b) { font-variant-numeric: tabular-nums; }
+
+  /* Minimap */
+  .tdash__mapbox { position: absolute; left: 0.75rem; bottom: 0.75rem; display: flex; align-items: flex-end; gap: 0.4rem; }
+  .tdash__zoom { display: grid; gap: 0.25rem; }
+  .tdash__zoom button { width: 26px; height: 26px; border-radius: 0.45rem; border: 1px solid rgb(13 45 99 / 0.1); background: rgb(255 255 255 / 0.9); font: inherit; font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer; }
+  .tdash__zoom button:hover { border-color: var(--cyan); }
+  .tdash__mini { width: 74px; height: 74px; padding: 0.3rem; cursor: pointer; }
+  .tdash__mini svg { width: 100%; height: 100%; }
+  .tdash__mini :global(rect) { fill: #dbe4ee; transition: fill 400ms ease; }
+  .tdash__mini :global(rect.park) { fill: #bfe8cf; }
+  .tdash__mini :global(rect.on) { fill: #0ea5e9; }
+
+  /* Small dashboards: one panel, at the bottom. */
+  @container (max-width: 520px) {
+    .tdash__col { top: auto; left: 0.6rem; right: 0.6rem; bottom: 0.6rem; width: auto; }
+    .tdash__health, .tdash__mix, .tdash__mapbox, .tdash__date { display: none; }
+    .tdash__live { left: auto; right: 0.6rem; translate: none; }
+    .tdash__clock { left: 0.6rem; top: 0.6rem; }
+  }
+  @container (min-width: 521px) and (max-width: 600px) { .tdash__mix { display: none; } }
+
+  /* Label on the 3D building (the engine sets its position). */
+  :global(.tdash-label) { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none !important; will-change: transform; }
+  :global(.tdash-label__card) { position: relative; transform: translate(26px, -50%); min-width: 11.5rem; padding: 0.55rem 0.7rem; border-radius: 0.75rem; background: rgb(255 255 255 / 0.88); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 1px solid rgb(255 255 255 / 0.8); box-shadow: 0 16px 36px -16px rgb(7 26 58 / 0.5); font-size: 11px; color: #0b1f3a; }
+  :global(.tdash-label__card)::before { content: ''; position: absolute; right: 100%; top: 50%; width: 26px; height: 1.5px; background: #0ea5e9; }
+  :global(.tdash-label__card)::after { content: ''; position: absolute; left: -30px; top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: #0ea5e9; box-shadow: 0 0 0 4px rgb(14 165 233 / 0.25); }
+  :global(.tdash-label__title) { font-weight: 800; font-size: 12px; }
+  :global(.tdash-label__ok) { display: inline-flex; align-items: center; gap: 0.3rem; margin: 0.25rem 0 0.35rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: #dcfce7; color: #15803d; font-size: 9.5px; font-weight: 700; }
+  :global(.tdash-label__ok i) { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; }
+  :global(.tdash-label dl) { display: grid; gap: 0.15rem; margin: 0; }
+  :global(.tdash-label dl div) { display: flex; justify-content: space-between; gap: 1rem; }
+  :global(.tdash-label dt) { color: #5b6b80; }
+  :global(.tdash-label dd) { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+</style>
