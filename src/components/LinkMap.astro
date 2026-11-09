@@ -17,7 +17,8 @@ const wide = (n: number) => n >= 4; // items for (almost) every theme link to th
 // Deterministic pseudo-random from the id, so the map is the same on every build.
 const rnd = (s: string, k: number) => { let h = 2166136261 ^ k; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return ((h >>> 0) % 1000) / 1000; };
 type Node = { id: string; x: number; y: number; type: string; title: string; themes: string[] };
-const nodes: Node[] = items.map((it) => {
+// Items without a theme have nowhere to sit on the map, so they are left out.
+const nodes: Node[] = items.filter((it) => it.themes.length > 0).map((it) => {
   const hs = it.themes.map((t) => hubPos[t]);
   let x = hs.reduce((a, h) => a + h.x, 0) / hs.length;
   let y = hs.reduce((a, h) => a + h.y, 0) / hs.length;

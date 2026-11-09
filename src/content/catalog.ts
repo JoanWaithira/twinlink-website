@@ -89,7 +89,6 @@ export const items: Item[] = [
     status: 'Prototype',
     demo: 'https://ai-building-silk.vercel.app/',
     preview: 'ai-building',
-    clip: { src: '/media/bram-house-building-twin.mp4', loop: '/media/bram-house-building-twin-loop.mp4', poster: '/media/bram-house-building-twin.jpg' },
   },
   {
     id: 'aadorp-energy-retrofit-dashboard',
@@ -124,6 +123,22 @@ export const items: Item[] = [
     status: 'Prototype',
     demo: 'https://a-neighbourhood-scale-urban-digital-twin-for-energy-ecolog.pages.dev/',
     preview: 'neighbourhood',
+  },
+  {
+    id: 'building-level-digital-twin',
+    type: 'twin',
+    icon: 'building',
+    title: 'Building-level Digital Twin',
+    summary: 'A real home in 3D: walk through it room by room and see its air, comfort and energy.',
+    body: [
+      'A 3D model of a home in Aadorp, placed in its real surroundings. Walk through it room by room and see the indoor air in each space: CO₂, temperature and humidity, with a clear sign when a room needs fresh air.',
+      'Building-level meters show energy use, battery charge and seasonal patterns over time, and what-if scenarios estimate what a retrofit would cost and save. An AI assistant answers questions about the rooms and the air quality.',
+    ],
+    features: ['Walk through the home in 3D', 'Air quality per room', 'Energy, battery and seasonal meters', 'Retrofit what-if with costs'],
+    themes: ['energy', 'renovation'],
+    scale: 'building',
+    status: 'Prototype',
+    clip: { src: '/media/building-level-digital-twin.mp4', loop: '/media/building-level-digital-twin-loop.mp4', poster: '/media/building-level-digital-twin.jpg' },
   },
   {
     id: 'area-redesign-twin',

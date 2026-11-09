@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import ItemCard from '../components/ItemCard.astro';
-import TwinDashboard from '../components/TwinDashboard.astro';
+// import TwinDashboard from '../components/TwinDashboard.astro'; // archived, see the twinlink OS comment below
 import Search from '../components/Search.astro';
 import { home as h } from '../content/site';
 import { byTheme, byType, items, themes, types } from '../content/catalog';
@@ -12,7 +12,7 @@ const shots = import.meta.glob<{ default: ImageMetadata }>('../assets/demos/*.pn
 const shotFor = (name?: string) => name ? Object.entries(shots).find(([p]) => p.endsWith(`/${name}.png`))?.[1].default : undefined;
 const demos = byType('twin').filter((d) => d.demo);
 // Our own films (public/media/), shown as silent loops; click for the full video.
-const filmOrder = ['data-space-and-data-labs', 'aadorp-energy-retrofit-dashboard', 'ai-building-energy-twin', 'area-redesign-twin', 'wind-farm-twin', 'esdl-energy-system-editor'];
+const filmOrder = ['data-space-and-data-labs', 'aadorp-energy-retrofit-dashboard', 'building-level-digital-twin', 'area-redesign-twin', 'wind-farm-twin', 'esdl-energy-system-editor'];
 const films = items.filter((i) => i.clip).sort((a, b) => (filmOrder.indexOf(a.id) + 1 || 99) - (filmOrder.indexOf(b.id) + 1 || 99));
 // Introduction video (YouTube, opens with sound): twinlink.eu | Digital Twins in Action: Almelo Pilot.
 const HERO_VIDEO = 'JFxr2k6DeDQ';
@@ -51,6 +51,9 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
     </div>
   </section>
 
+  {/* ARCHIVED (Nov 2026): the twinlink OS section with the live 3D dashboard (src/components/TwinDashboard.astro,
+      illustrative data). Taken off the page because the background film and "Twins in motion" now show the
+      real twins. To bring it back, remove this comment and the one around the import at the top.
   <!-- twinlink OS: a live 3D twin with its data panels, in its own section (not over the video). -->
   <section class="section osdemo">
     <div class="container-site osdemo__grid">
@@ -68,6 +71,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
       <div class="osdemo__twin" data-reveal><TwinDashboard /></div>
     </div>
   </section>
+  */}
 
   <!-- Twins in motion: our own films, playing as silent loops. -->
   <section class="section films">
@@ -302,8 +306,21 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   .hero__film :global(video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1s ease; }
   .hero__film.is-on :global(video) { opacity: 1; }
   /* The veil keeps the text readable on the left and lets the film show through on the right. */
-  .hero__veil { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(246 249 248 / 0.95) 0%, rgb(246 249 248 / 0.9) 40%, rgb(246 249 248 / 0.2) 60%, rgb(246 249 248 / 0.04) 100%), linear-gradient(180deg, transparent 82%, var(--color-paper)); }
-  @media (max-width: 63.99rem) { .hero__veil { background: linear-gradient(180deg, rgb(246 249 248 / 0.9) 0%, rgb(246 249 248 / 0.8) 55%, rgb(246 249 248 / 0.6) 100%); } }
+  /* Dark hero: the film plays almost at full strength; a soft dark tint behind the white text keeps
+     it readable. Stronger on the left (text), nearly clear on the right. */
+  .hero { color: #fff; background: var(--color-navy-deep); }
+  .hero__veil { position: absolute; inset: 0; pointer-events: none; background:
+      linear-gradient(90deg, rgb(5 15 34 / 0.72) 0%, rgb(5 15 34 / 0.5) 38%, rgb(5 15 34 / 0.12) 62%, rgb(5 15 34 / 0) 100%),
+      linear-gradient(180deg, rgb(5 15 34 / 0.25) 0%, transparent 25%, transparent 75%, rgb(5 15 34 / 0.45) 100%); }
+  @media (max-width: 63.99rem) { .hero__veil { background: linear-gradient(180deg, rgb(5 15 34 / 0.55) 0%, rgb(5 15 34 / 0.35) 45%, rgb(5 15 34 / 0.6) 100%); } }
+  .hero::before { display: none; }
+  .hero .eyebrow { color: var(--color-green-bright); }
+  .hero__title { color: #fff; text-shadow: 0 2px 24px rgb(5 15 34 / 0.45); }
+  .hero .lede { color: rgb(230 238 248 / 0.92); text-shadow: 0 1px 12px rgb(5 15 34 / 0.5); }
+  .hero :global(.srch__label) { color: #fff; }
+  .hero :global(.srch__box) { border-color: transparent; box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.6); }
+  .hero .btn--ghost { background: rgb(255 255 255 / 0.12); border-color: rgb(255 255 255 / 0.45); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .hero .btn--ghost:hover { border-color: #fff; background: rgb(255 255 255 / 0.2); }
   .hero__filmbar { position: absolute; left: 0; right: 0; bottom: 1.25rem; display: flex; justify-content: flex-end; align-items: center; gap: 0.625rem; z-index: 2; pointer-events: none; }
   .hero__watch { pointer-events: auto; display: inline-flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1.25rem 0.5rem 0.5rem; border: 0; border-radius: 999px; background: rgb(7 26 58 / 0.82); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #fff; font: inherit; text-align: left; cursor: pointer; box-shadow: 0 18px 40px -18px rgb(7 26 58 / 0.8); transition: transform 250ms ease, background-color 250ms ease; }
   .hero__watch:hover { transform: translateY(-2px); background: rgb(7 26 58 / 0.95); }
