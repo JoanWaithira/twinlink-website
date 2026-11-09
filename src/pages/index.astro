@@ -20,8 +20,14 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
 <Base title={h.seo.title} description={h.seo.description}>
   <!-- Hero: the promise and a search, over the background film. -->
   <section class="hero">
-    <!-- Background film: a montage of our own twins (see the films below). Added by the script; still image for reduced motion and data saver. -->
-    <div class="hero__film" data-film data-src="/media/hero-montage.mp4" data-src-sm="/media/hero-montage-sm.mp4" data-poster="/media/hero-montage.jpg" aria-hidden="true"></div>
+    <!-- Background film: a promo montage of our own twins (see the films below), muted and looping.
+         In the page itself (not added by script) so phones autoplay it; smaller file on small screens. -->
+    <div class="hero__film" data-film aria-hidden="true">
+      <video muted autoplay loop playsinline webkit-playsinline preload="auto" poster="/media/hero-montage.jpg" disablepictureinpicture disableremoteplayback tabindex="-1" data-film-video>
+        <source src="/media/hero-montage.mp4" type="video/mp4" media="(min-width: 768px)" />
+        <source src="/media/hero-montage-sm.mp4" type="video/mp4" />
+      </video>
+    </div>
     <div class="hero__veil" aria-hidden="true"></div>
     <div class="hero__filmbar container-site">
       <button type="button" class="hero__watch" data-watch={HERO_VIDEO} data-watch-title="twinlink.eu | Digital Twins in Action: Almelo Pilot">
@@ -250,35 +256,38 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
     }
   }
 
-  // Hero background film: a montage of our own twins (public/media/hero-montage*.mp4), muted and
-  // looping. Smaller file on small screens; only the still image for reduced motion or data saver.
+  // Hero background film (the <video> is in the page). Stays still only with data saver. Phones that
+  // block autoplay (iPhone Low Power Mode) start it on the first touch or scroll. A button pauses it.
   const film = document.querySelector<HTMLElement>('[data-film]');
+  const v = document.querySelector<HTMLVideoElement>('[data-film-video]');
   const toggle = document.querySelector<HTMLButtonElement>('[data-film-toggle]');
   const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches || conn?.saveData;
-  if (film && !calm) {
-    const v = document.createElement('video');
-    v.muted = true; v.loop = true; v.playsInline = true; v.autoplay = true;
-    v.setAttribute('muted', '');
-    v.poster = film.dataset.poster!;
-    v.src = innerWidth < 768 ? film.dataset.srcSm! : film.dataset.src!;
-    v.addEventListener('playing', () => film.classList.add('is-on'), { once: true });
-    film.append(v);
-    v.play().catch(() => {});
-    if (toggle) {
-      toggle.hidden = false;
-      toggle.addEventListener('click', () => {
-        const paused = toggle.getAttribute('aria-pressed') === 'true';
-        if (paused) v.play().catch(() => {}); else v.pause();
-        toggle.setAttribute('aria-pressed', String(!paused));
-        toggle.textContent = paused ? 'Pause background' : 'Play background';
+  if (film && v) {
+    const on = () => film.classList.add('is-on');
+    v.addEventListener('playing', on);
+    if (!v.paused) on();
+    if (conn?.saveData) {
+      v.pause();
+    } else {
+      v.muted = true;
+      const tryPlay = () => { if (toggle?.getAttribute('aria-pressed') !== 'true') v.play().catch(() => {}); };
+      tryPlay();
+      for (const ev of ['touchstart', 'pointerdown', 'scroll', 'keydown']) addEventListener(ev, tryPlay, { once: true, passive: true });
+      if (toggle) {
+        toggle.hidden = false;
+        toggle.addEventListener('click', () => {
+          const paused = toggle.getAttribute('aria-pressed') === 'true';
+          toggle.setAttribute('aria-pressed', String(!paused));
+          toggle.textContent = paused ? 'Pause background' : 'Play background';
+          if (paused) v.play().catch(() => {}); else v.pause();
+        });
+      }
+      // Pause the background while a full video plays in the window, resume after.
+      document.addEventListener('video-dialog', (e) => {
+        if (toggle?.getAttribute('aria-pressed') === 'true') return;
+        if ((e as CustomEvent).detail === 'open') v.pause(); else v.play().catch(() => {});
       });
     }
-    // Pause the background while a full video plays in the window, resume after.
-    document.addEventListener('video-dialog', (e) => {
-      if (toggle?.getAttribute('aria-pressed') === 'true') return;
-      if ((e as CustomEvent).detail === 'open') v.pause(); else v.play().catch(() => {});
-    });
   }
 </script>
 
