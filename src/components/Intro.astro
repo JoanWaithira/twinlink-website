@@ -1,0 +1,172 @@
+---
+// Home page intro, once per visit: the hexagon network draws itself, the twinlink symbol appears,
+// the wordmark sweeps out of it while a counter runs, then the logo separates (symbol left,
+// wordmark right) and the screen opens like doors onto the hero film. Purely decorative.
+// Whether it shows is decided by an inline script in Base.astro (adds html.intro before paint).
+import { getImage } from 'astro:assets';
+import logo from '../assets/twinlink-logo.png';
+const img = await getImage({ src: logo, width: 1300, format: 'webp' });
+// The logo is 2172 x 724: symbol up to x 676, wordmark from x 730, tagline below y 464.
+const W = 2172, H = 724;
+// Hexagon of the network around the symbol (logo coordinates).
+const hex = [[413, 43], [648, 172], [641, 413], [413, 560], [170, 413], [178, 172]];
+const hexPath = 'M' + hex.map(([x, y]) => `${x} ${y}`).join(' L') + ' Z';
+---
+<div class="intro" data-intro aria-hidden="true">
+  <div class="intro__half intro__half--top"></div>
+  <div class="intro__half intro__half--bottom"></div>
+  <span class="intro__corner intro__corner--tl"></span>
+  <span class="intro__corner intro__corner--tr"></span>
+  <span class="intro__corner intro__corner--bl"></span>
+  <span class="intro__corner intro__corner--br"></span>
+
+  <div class="intro__stage">
+    <div class="intro__logo" style={`aspect-ratio: ${W} / ${H}`}>
+      <svg class="intro__net" viewBox={`0 0 ${W} ${H}`}>
+        <defs>
+          <linearGradient id="intro-net" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d37a" /><stop offset="1" stop-color="#0d2d63" /></linearGradient>
+        </defs>
+        <path d={hexPath} pathLength="1" />
+        {hex.map(([x, y], i) => <circle cx={x} cy={y} r="22" style={`animation-delay: ${120 + i * 90}ms`} />)}
+      </svg>
+      <img class="intro__part intro__part--symbol" src={img.src} alt="" decoding="sync" />
+      <img class="intro__part intro__part--word" src={img.src} alt="" decoding="sync" />
+      <img class="intro__part intro__part--tag" src={img.src} alt="" decoding="sync" />
+    </div>
+    <p class="intro__meter"><span class="intro__slash">/</span><span data-intro-count>00</span><span class="intro__bar"><i data-intro-bar></i></span><span class="intro__word" data-intro-word>Connecting data</span></p>
+  </div>
+</div>
+
+<style>
+  .intro { --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace; position: fixed; inset: 0; z-index: 200; display: none; place-items: center; color: var(--color-navy); }
+  :global(html.intro) .intro, .intro.is-leaving { display: grid; }
+  :global(html.intro) { overflow: hidden; }
+
+  /* Two halves of the screen: they part like doors at the end. */
+  .intro__half { position: absolute; left: 0; right: 0; height: 50.5%; background:
+      linear-gradient(rgb(13 45 99 / 0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+      linear-gradient(90deg, rgb(13 45 99 / 0.05) 1px, transparent 1px) 0 0 / 40px 40px,
+      var(--color-paper);
+    transition: transform 950ms cubic-bezier(0.76, 0, 0.24, 1); }
+  .intro__half--top { top: 0; background-position: 0 0; box-shadow: 0 1px 0 rgb(34 211 122 / 0); }
+  .intro__half--bottom { bottom: 0; background-position: 0 100%; }
+  .intro.is-leaving .intro__half--top { transform: translateY(-101%); }
+  .intro.is-leaving .intro__half--bottom { transform: translateY(101%); }
+  /* A bright seam where the doors open. */
+  .intro.is-leaving .intro__half--top { box-shadow: 0 2px 24px rgb(34 211 122 / 0.9); }
+
+  .intro__corner { position: absolute; z-index: 1; width: 1.25rem; height: 1.25rem; border: 0 solid rgb(13 45 99 / 0.35); animation: intro-fade 700ms 200ms ease both; transition: opacity 300ms ease; }
+  .intro__corner--tl { top: 1.5rem; left: 1.5rem; border-top-width: 1.5px; border-left-width: 1.5px; }
+  .intro__corner--tr { top: 1.5rem; right: 1.5rem; border-top-width: 1.5px; border-right-width: 1.5px; }
+  .intro__corner--bl { bottom: 1.5rem; left: 1.5rem; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+  .intro__corner--br { bottom: 1.5rem; right: 1.5rem; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+  .intro.is-leaving .intro__corner { opacity: 0; }
+
+  .intro__stage { position: relative; z-index: 2; display: grid; justify-items: center; gap: 1.75rem; width: min(46rem, 86vw); }
+  .intro__logo { position: relative; width: 100%; }
+  .intro__part, .intro__net { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* 1. The hexagon network draws itself, nodes pop in. */
+  .intro__net { overflow: visible; transform: translateX(34.5%); animation: intro-to-left 700ms 1000ms cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+  .intro__net path { fill: none; stroke: url(#intro-net); stroke-width: 9; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linejoin: round; animation: intro-draw 750ms 80ms cubic-bezier(0.65, 0, 0.35, 1) forwards, intro-fade-out 400ms 900ms ease forwards; }
+  .intro__net circle { fill: #22d37a; transform-box: fill-box; transform-origin: center; transform: scale(0); animation: intro-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards, intro-fade-out 400ms 900ms ease forwards; }
+
+  /* 2. The symbol appears where the network was (centred), then moves to its place. */
+  .intro__part--symbol { clip-path: inset(0 68.9% 0 0); opacity: 0; filter: blur(10px); transform: translateX(34.5%) scale(0.9); animation: intro-symbol 600ms 520ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards, intro-to-left 700ms 1000ms cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+  /* 3. Wordmark and tagline sweep out from behind the symbol. */
+  .intro__part--word { clip-path: inset(0 100% 36% 33.6%); transform: translateX(-6%); animation: intro-wipe-word 750ms 1150ms cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+  .intro__part--tag { clip-path: inset(68% 100% 0 33.6%); opacity: 0.0; animation: intro-wipe-tag 650ms 1550ms cubic-bezier(0.65, 0, 0.35, 1) forwards; }
+
+  @keyframes intro-draw { to { stroke-dashoffset: 0; } }
+  @keyframes intro-pop { to { transform: scale(1); } }
+  @keyframes intro-fade-out { to { opacity: 0; } }
+  @keyframes intro-fade { from { opacity: 0; } }
+  @keyframes intro-symbol { to { opacity: 1; filter: blur(0); transform: translateX(34.5%) scale(1); } }
+  @keyframes intro-to-left { to { transform: translateX(0) scale(1); } }
+  @keyframes intro-wipe-word { to { clip-path: inset(0 0 36% 33.6%); transform: translateX(0); } }
+  @keyframes intro-wipe-tag { to { clip-path: inset(68% 0 0 33.6%); opacity: 1; } }
+
+  /* Counter and decoding word. */
+  .intro__meter { display: flex; align-items: center; gap: 0.75rem; font-family: var(--mono); font-size: 0.8125rem; letter-spacing: 0.08em; color: var(--color-navy); animation: intro-fade 500ms 300ms ease both; }
+  .intro__slash { color: var(--color-green); }
+  [data-intro-count] { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 2ch; }
+  .intro__bar { position: relative; width: 7rem; height: 2px; border-radius: 2px; background: rgb(13 45 99 / 0.12); overflow: hidden; }
+  .intro__bar i { position: absolute; inset: 0; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--color-green), #38bdf8); box-shadow: 0 0 8px rgb(34 211 122 / 0.8); }
+  .intro__word { min-width: 15ch; text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.6875rem; color: var(--color-muted); white-space: nowrap; }
+  @media (max-width: 30rem) { .intro__meter { gap: 0.5rem; } .intro__bar { width: 3.5rem; } .intro__word { min-width: 0; letter-spacing: 0.1em; font-size: 0.625rem; } }
+
+  /* 4. Exit: the logo separates, symbol to the left and wordmark to the right. */
+  .intro.is-leaving .intro__part--symbol { animation: intro-exit-left 950ms cubic-bezier(0.76, 0, 0.24, 1) forwards; }
+  .intro.is-leaving .intro__part--word { animation: intro-exit-word 950ms cubic-bezier(0.76, 0, 0.24, 1) forwards; }
+  .intro.is-leaving .intro__part--tag { animation: intro-exit-tag 950ms 60ms cubic-bezier(0.76, 0, 0.24, 1) forwards; }
+  @keyframes intro-exit-left { from { opacity: 1; filter: none; transform: none; } to { opacity: 0; filter: blur(4px); transform: translateX(-60vw) rotate(-14deg); } }
+  @keyframes intro-exit-word { from { clip-path: inset(0 0 36% 33.6%); transform: none; opacity: 1; } to { clip-path: inset(0 0 36% 33.6%); transform: translateX(60vw); opacity: 0; } }
+  @keyframes intro-exit-tag { from { clip-path: inset(68% 0 0 33.6%); transform: none; opacity: 1; } to { clip-path: inset(68% 0 0 33.6%); transform: translateX(60vw); opacity: 0; } }
+  .intro.is-leaving .intro__net { opacity: 0; }
+  .intro.is-leaving .intro__meter { opacity: 0; transition: opacity 250ms ease; }
+  .intro.is-leaving { pointer-events: none; }
+</style>
+
+<script>
+  const root = document.documentElement;
+  const el = document.querySelector<HTMLElement>('[data-intro]');
+
+  if (el && root.classList.contains('intro')) {
+    const count = el.querySelector<HTMLElement>('[data-intro-count]')!;
+    const bar = el.querySelector<HTMLElement>('[data-intro-bar]')!;
+    const word = el.querySelector<HTMLElement>('[data-intro-word]')!;
+    const words = ['Connecting data', 'Modelling the town', 'Sustaining decisions'];
+    const glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&/<>';
+    const decode = (text: string) => {
+      const t0 = performance.now();
+      const step = (now: number) => {
+        const p = Math.min((now - t0) / 380, 1), n = Math.floor(p * text.length);
+        word.textContent = text.slice(0, n) + [...text.slice(n)].map((c) => (c === ' ' ? ' ' : glyphs[(Math.random() * glyphs.length) | 0])).join('');
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+
+    // Ready when the hero film can play (or the page has loaded, for data saver).
+    let ready = false;
+    const video = document.querySelector<HTMLVideoElement>('[data-film-video]');
+    if (!video || video.readyState >= 3) ready = true;
+    video?.addEventListener('canplay', () => { ready = true; }, { once: true });
+    addEventListener('load', () => setTimeout(() => { ready = true; }, 300), { once: true });
+
+    const start = performance.now();
+    const MIN = 2100; // the logo animation needs this long
+    const MAX = 3500; // never longer than this
+    let shown = 0, wi = -1, finished = false;
+
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      try { sessionStorage.setItem('tl-intro', '1'); } catch {}
+      el.classList.add('is-leaving');
+      root.classList.remove('intro');
+      dispatchEvent(new Event('tl:intro-done'));
+      setTimeout(() => el.remove(), 1100);
+    };
+    const tick = (now: number) => {
+      const t = now - start;
+      const done = t > MAX || (t > MIN && ready);
+      const target = done ? 100 : Math.min(t / MIN, 1) * 92;
+      shown += (target - shown) * (done ? 0.25 : 0.12);
+      if (done && shown > 99.4) shown = 100;
+      count.textContent = String(Math.round(shown)).padStart(2, '0');
+      bar.style.transform = `scaleX(${shown / 100})`;
+      const next = Math.min(Math.floor(shown / (100 / words.length)), words.length - 1);
+      if (next !== wi) { wi = next; decode(words[next]); }
+      if (shown >= 100) setTimeout(finish, 220);
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    // Skip on click or key, and a backup timer for slow devices.
+    addEventListener('pointerdown', finish, { once: true });
+    addEventListener('keydown', finish, { once: true });
+    setTimeout(finish, MAX + 600);
+  } else {
+    el?.remove();
+  }
+</script>

@@ -4,11 +4,14 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import DemoDialog from '../components/DemoDialog.astro';
 import VideoDialog from '../components/VideoDialog.astro';
+import Intro from '../components/Intro.astro';
 interface Props { title: string; description: string }
 const { title, description } = Astro.props;
 const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
 // Preview builds (Netlify): hidden from search engines. Set PUBLIC_PREVIEW=true when building.
 const preview = import.meta.env.PUBLIC_PREVIEW === 'true';
+// The logo intro plays on the home page only (once per visit, see Intro.astro).
+const isHome = (Astro.url.pathname.replace(/\/$/, '') || '/') === '/';
 ---
 <!doctype html>
 <html lang="en">
@@ -29,9 +32,18 @@ const preview = import.meta.env.PUBLIC_PREVIEW === 'true';
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#f6f9f8" />
+    {isHome && (
+      <script is:inline>
+        // Decide before the first paint whether the logo intro plays: once per visit, never with reduced motion.
+        try {
+          if (!sessionStorage.getItem('tl-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('intro'); history.scrollRestoration = 'manual'; scrollTo(0, 0); }
+        } catch (e) {}
+      </script>
+    )}
   </head>
   <body class="min-h-dvh flex flex-col">
     <a href="#main" class="sr-only">Skip to content</a>
+    {isHome && <Intro />}
     <Header />
     <main id="main" class="flex-1">
       <slot />
@@ -41,6 +53,7 @@ const preview = import.meta.env.PUBLIC_PREVIEW === 'true';
     <VideoDialog />
     <script>
       import '../lib/reveal';
+      import '../lib/fx';
     </script>
   </body>
 </html>

@@ -91,3 +91,51 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---- Tech motion (src/lib/fx.ts). All of it is off with reduced motion (rule above). -------- */
+@property --fx-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+/* Scroll progress line */
+.fx-progress { position: fixed; top: 0; left: 0; right: 0; z-index: 60; height: 3px; transform: scaleX(0); transform-origin: 0 50%; background: linear-gradient(90deg, var(--color-green), #38bdf8, var(--color-green-bright)); box-shadow: 0 0 12px rgb(34 211 122 / 0.7); pointer-events: none; }
+
+/* Hero words rising in */
+.fx-word { display: inline-block; opacity: 0; transform: translateY(0.45em); filter: blur(6px); animation: fx-rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+@keyframes fx-rise { to { opacity: 1; transform: none; filter: blur(0); } }
+
+/* Eyebrows: a small live marker before the label */
+.eyebrow { font-variant-numeric: tabular-nums; }
+.eyebrow::before { content: ''; display: inline-block; width: 0.5em; height: 0.5em; margin-right: 0.55em; border-radius: 1px; background: currentColor; vertical-align: 0.08em; box-shadow: 0 0 10px currentColor; animation: fx-blink 1.6s steps(2, jump-none) infinite; }
+@keyframes fx-blink { 50% { opacity: 0.25; } }
+
+/* Cursor spotlight and glowing border on cards */
+.fx-spot { position: relative; isolation: isolate; }
+.fx-spot::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 300ms ease;
+  background: radial-gradient(22rem circle at var(--mx, 50%) var(--my, 50%), rgb(34 211 122 / 0.14), rgb(56 189 248 / 0.08) 40%, transparent 70%); }
+.fx-spot:hover::before { opacity: 1; }
+.fx-spot::after { content: ''; position: absolute; inset: -1px; z-index: 2; border-radius: inherit; padding: 1px; pointer-events: none; opacity: 0; transition: opacity 300ms ease;
+  background: conic-gradient(from var(--fx-angle), transparent 0 60%, var(--color-green-bright) 75%, #38bdf8 85%, transparent 95%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.fx-spot:hover::after { opacity: 1; animation: fx-spin 3s linear infinite; }
+@keyframes fx-spin { to { --fx-angle: 360deg; } }
+
+/* Light sweep on the main buttons */
+.btn--green, .btn--primary { position: relative; overflow: hidden; }
+.btn--green::after, .btn--primary::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%); transform: translateX(-120%); pointer-events: none; }
+.btn--green:hover::after, .btn--primary:hover::after { transform: translateX(120%); transition: transform 700ms ease; }
+
+/* Drifting data grid for dark sections (add class fx-grid) */
+.fx-grid { position: relative; isolation: isolate; overflow: clip; }
+.fx-grid::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(rgb(56 189 248 / 0.07) 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, rgb(56 189 248 / 0.07) 1px, transparent 1px) 0 0 / 48px 48px;
+  -webkit-mask: radial-gradient(80% 70% at 50% 40%, #000, transparent); mask: radial-gradient(80% 70% at 50% 40%, #000, transparent);
+  animation: fx-drift 24s linear infinite; }
+.fx-grid::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(40% 50% at 15% 10%, rgb(34 211 122 / 0.14), transparent 70%), radial-gradient(35% 45% at 85% 60%, rgb(56 189 248 / 0.12), transparent 70%);
+  animation: fx-glow 14s ease-in-out infinite alternate; }
+@keyframes fx-drift { to { background-position: 0 48px, 48px 0; } }
+@keyframes fx-glow { to { transform: translate3d(2%, -3%, 0) scale(1.05); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-word { opacity: 1; transform: none; filter: none; }
+  .fx-spot::after, .eyebrow::before { animation: none; }
+}

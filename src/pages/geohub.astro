@@ -16,7 +16,7 @@ const reel = videos[0].item;
 ---
 <Base title="Digital Twin Geohub | twinlink.eu" description="Twenty digital twin research projects from the University of Twente Digital Twin Geohub: urban heat, traffic, floods, waste, 3D cities and infrastructure, with videos and papers.">
   <!-- Head -->
-  <section class="gh-head">
+  <section class="gh-head fx-grid">
     <div class="container-site">
       <nav class="gh-crumbs" aria-label="Breadcrumb">
         <a href="/">Home</a><span aria-hidden="true">/</span><a href="/projects">Projects</a><span aria-hidden="true">/</span><a href="/geohub">Digital Twin Geohub</a>
@@ -32,10 +32,10 @@ const reel = videos[0].item;
           </div>
         </div>
         <ul class="gh-stats" aria-label="In numbers">
-          <li><strong>{entries.length}</strong><span>projects</span></li>
-          <li><strong>{videos.length}</strong><span>videos</span></li>
-          <li><strong>{papers}</strong><span>papers & links</span></li>
-          <li><strong>{geohub.topics.length}</strong><span>topics</span></li>
+          <li><strong data-countup={entries.length}>{entries.length}</strong><span>projects</span></li>
+          <li><strong data-countup={videos.length}>{videos.length}</strong><span>videos</span></li>
+          <li><strong data-countup={papers}>{papers}</strong><span>papers & links</span></li>
+          <li><strong data-countup={geohub.topics.length}>{geohub.topics.length}</strong><span>topics</span></li>
         </ul>
       </div>
     </div>

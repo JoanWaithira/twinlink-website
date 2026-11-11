@@ -29,6 +29,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
       </video>
     </div>
     <div class="hero__veil" aria-hidden="true"></div>
+    <div class="hero__hud" aria-hidden="true"><i class="hero__corner hero__corner--tr"></i><i class="hero__corner hero__corner--br"></i></div>
     <div class="hero__filmbar container-site">
       <button type="button" class="hero__watch" data-watch={HERO_VIDEO} data-watch-title="twinlink.eu | Digital Twins in Action: Almelo Pilot">
         <span class="hero__watch-play"><Icon name="play" size={20} /></span>
@@ -39,7 +40,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
     <div class="container-site hero__grid">
       <div class="hero__text">
         <p class="eyebrow">{h.hero.eyebrow}</p>
-        <h1 class="hero__title">{h.hero.headline}</h1>
+        <h1 class="hero__title" data-fx-words>{h.hero.headline}</h1>
         <p class="lede mt-5">{h.hero.body}</p>
         <Search label={h.hero.searchLabel} placeholder={h.hero.searchPlaceholder} />
         <div class="hero__actions">
@@ -74,7 +75,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   */}
 
   <!-- Twins in motion: our own films, playing as silent loops. -->
-  <section class="section films">
+  <section class="section films fx-grid">
     <div class="container-site">
       <div class="head" data-reveal>
         <p class="eyebrow">Twins in motion</p>
@@ -101,7 +102,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   </section>
 
   <!-- Try it now: the live demos open in a window on the page. -->
-  <section id="try" class="section try">
+  <section id="try" class="section try fx-grid">
     <div class="container-site">
       <div class="head" data-reveal>
         <p class="eyebrow">{h.try.eyebrow}</p>
@@ -142,7 +143,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
             <span class="theme__icon"><Icon name={t.icon} size={26} /></span>
             <span class="theme__label">{t.label}</span>
             <span class="theme__q">“{t.question}”</span>
-            <span class="theme__count">{byTheme(t.id).length} things to explore <span aria-hidden="true">→</span></span>
+            <span class="theme__count"><span data-countup={byTheme(t.id).length}>{byTheme(t.id).length}</span> things to explore <span aria-hidden="true">→</span></span>
           </a>
         ))}
       </div>
@@ -159,7 +160,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
       <div class="shelves__grid">
         {types.map((t) => (
           <a href={t.href} class={`shelf shelf--${t.id}`} data-reveal>
-            <span class="shelf__n">{byType(t.id).length}</span>
+            <span class="shelf__n" data-countup={byType(t.id).length}>{byType(t.id).length}</span>
             <span class="shelf__icon"><Icon name={t.icon} size={24} /></span>
             <span class="shelf__label">{t.plural}</span>
             <span class="shelf__intro">{t.intro}</span>
@@ -314,6 +315,17 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
       linear-gradient(180deg, rgb(5 15 34 / 0.25) 0%, transparent 25%, transparent 75%, rgb(5 15 34 / 0.45) 100%); }
   @media (max-width: 63.99rem) { .hero__veil { background: linear-gradient(180deg, rgb(5 15 34 / 0.55) 0%, rgb(5 15 34 / 0.35) 45%, rgb(5 15 34 / 0.6) 100%); } }
   .hero::before { display: none; }
+  /* Tech overlay on the film: a faint grid, a slow scan line and viewfinder corners. */
+  .hero__hud { position: absolute; inset: 0; pointer-events: none; overflow: hidden;
+    background: linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 56px 56px, linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 56px 56px;
+    -webkit-mask: linear-gradient(90deg, transparent 30%, #000 70%); mask: linear-gradient(90deg, transparent 30%, #000 70%); }
+  @media (max-width: 63.99rem) { .hero__hud { -webkit-mask: none; mask: none; opacity: 0.6; } }
+  .hero__hud::after { content: ''; position: absolute; left: 0; right: 0; top: -20%; height: 18%; background: linear-gradient(180deg, transparent, rgb(56 189 248 / 0.10) 70%, rgb(125 211 252 / 0.45) 99%, transparent); animation: hero-scan 7s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+  @keyframes hero-scan { 0% { transform: translateY(0); } 100% { transform: translateY(700%); } }
+  .hero__corner { position: absolute; width: 26px; height: 26px; border: 2px solid rgb(125 211 252 / 0.7); }
+  .hero__corner--tr { top: 1.25rem; right: 1.25rem; border-left: 0; border-bottom: 0; }
+  .hero__corner--br { bottom: 5.5rem; right: 1.25rem; border-left: 0; border-top: 0; }
+  @media (prefers-reduced-motion: reduce) { .hero__hud::after { display: none; } }
   .hero .eyebrow { color: var(--color-green-bright); }
   .hero__title { color: #fff; text-shadow: 0 2px 24px rgb(5 15 34 / 0.45); }
   .hero .lede { color: rgb(230 238 248 / 0.92); text-shadow: 0 1px 12px rgb(5 15 34 / 0.5); }
