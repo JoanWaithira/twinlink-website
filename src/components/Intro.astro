@@ -1,5 +1,5 @@
 ---
-// Home page intro, once per visit: the hexagon network draws itself, the twinlink symbol appears,
+// Home page intro, on arrival and on reload (not when browsing back from another page): the hexagon network draws itself, the twinlink symbol appears,
 // the wordmark sweeps out of it while a counter runs, then the logo separates (symbol left,
 // wordmark right) and the screen opens like doors onto the hero film. Purely decorative.
 // Whether it shows is decided by an inline script in Base.astro (adds html.intro before paint).
@@ -142,7 +142,6 @@ const hexPath = 'M' + hex.map(([x, y]) => `${x} ${y}`).join(' L') + ' Z';
     const finish = () => {
       if (finished) return;
       finished = true;
-      try { sessionStorage.setItem('tl-intro', '1'); } catch {}
       el.classList.add('is-leaving');
       root.classList.remove('intro');
       dispatchEvent(new Event('tl:intro-done'));
