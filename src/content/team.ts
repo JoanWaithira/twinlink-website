@@ -9,6 +9,8 @@ export interface Person {
   email: string;
   linkedin: string;
   photo: string;
+  /** Shown in small print next to the name, e.g. 'Non-remunerated' for board members (ANBI). */
+  note?: string;
 }
 
 const li = (name: string) => `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(name)}`;
@@ -18,9 +20,9 @@ export const team: { id: string; title: string; people: Person[] }[] = [
     id: 'board',
     title: 'Board',
     people: [
-      { name: 'Dr. Yashar Hajimolana', role: 'Chair of the Board', bio: 'Energy Systems Integration & Circular Solutions Expert. Bridge-builder between research, industry and innovation.', email: 'info@twinlink.eu', linkedin: li('Yashar Hajimolana'), photo: 'yashar' },
-      { name: 'Dr. Mila Koeva', role: 'Treasurer of the Board', bio: 'Vice Dean of Research and Associate Professor in the field of 3D city digital twins and geospatial technologies.', email: 'info@twinlink.eu', linkedin: li('Mila Koeva'), photo: 'mila' },
-      { name: 'Bram Reinders MSc', role: 'Board Secretary', bio: 'International business developer and impact maker in the sustainable energy sector, with a focus on collaboration, innovation and scaling.', email: 'info@twinlink.eu', linkedin: li('Bram Reinders'), photo: 'bram' },
+      { name: 'Dr. Yashar Hajimolana', role: 'Chair of the Board', bio: 'Energy Systems Integration & Circular Solutions Expert. Bridge-builder between research, industry and innovation.', email: 'info@twinlink.eu', linkedin: li('Yashar Hajimolana'), photo: 'yashar', note: 'Non-remunerated' },
+      { name: 'Dr. Mila Koeva', role: 'Treasurer of the Board', bio: 'Vice Dean of Research and Associate Professor in the field of 3D city digital twins and geospatial technologies.', email: 'info@twinlink.eu', linkedin: li('Mila Koeva'), photo: 'mila', note: 'Non-remunerated' },
+      { name: 'Bram Reinders MSc', role: 'Board Secretary', bio: 'International business developer and impact maker in the sustainable energy sector, with a focus on collaboration, innovation and scaling.', email: 'info@twinlink.eu', linkedin: li('Bram Reinders'), photo: 'bram', note: 'Non-remunerated' },
     ],
   },
   {

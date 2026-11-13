@@ -9,7 +9,7 @@ const index = items.map((i) => ({ id: i.id, t: i.title, s: i.summary, k: typeOf(
 <form class="srch" action="/explore" method="get" role="search" data-search data-index={JSON.stringify(index)}>
   <label class="srch__label" for="srch-q">{label}</label>
   <div class="srch__box">
-    <Icon name="search" class="srch__icon" />
+    <Icon name="search" size={18} class="srch__icon" />
     <input id="srch-q" name="q" type="search" autocomplete="off" placeholder={placeholder} aria-controls="srch-list" aria-expanded="false" />
     <button type="submit" class="srch__go">Search</button>
   </div>

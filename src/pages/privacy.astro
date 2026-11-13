@@ -1,0 +1,71 @@
+---
+// Privacy & cookies: a plain summary of what this site actually does, with the foundation's
+// full policies (March 2026, from the previous twinlink.eu site) as PDFs in public/legal/.
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../content/site';
+
+const policies = [
+  { label: 'Privacy Policy', note: 'PDF · March 2026', href: '/legal/privacy-policy-twinlink.eu.pdf' },
+  { label: 'Cookie Policy', note: 'PDF · March 2026', href: '/legal/cookie-policy-twinlink.eu.pdf' },
+];
+---
+<Base title="Privacy & cookies | twinlink.eu" description="How twinlink.eu handles personal data and cookies: no tracking, no cookie banner needed.">
+  <PageHead eyebrow="Privacy & cookies" title="No tracking. Nothing to accept." crumbs={[{ label: 'Privacy & cookies', href: '/privacy' }]}
+    intro="This website sets no cookies of its own and uses no analytics. Here is what does happen, in plain words." />
+
+  <section class="section">
+    <div class="container-site legal">
+      <div class="legal__body">
+        <h2>Cookies</h2>
+        <p>twinlink.eu places no cookies and runs no analytics or advertising scripts. That is why you see no cookie banner.</p>
+        <p>Two things on the site come from other services, and only load when you ask for them:</p>
+        <ul>
+          <li><strong>Videos</strong> play from YouTube in its privacy-enhanced mode (youtube-nocookie.com). Nothing loads from YouTube until you press play. Once playing, YouTube’s own <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">privacy policy</a> applies.</li>
+          <li><strong>Live demos</strong> (“Try it”) open the demo’s own website inside a window. Nothing loads until you open one. That website may set its own cookies.</li>
+        </ul>
+
+        <h2>Personal data</h2>
+        <p>Browsing the site does not require you to give us any personal data. Our hosting provider keeps short-lived technical logs (such as IP address and time of visit) to keep the site secure and running.</p>
+        <p>If you email us, we use your message and contact details only to reply and follow up. We do not sell personal data and do not share it for marketing.</p>
+
+        <h2>Your rights</h2>
+        <p>You can ask to see, correct or delete the personal data we hold about you, or object to its use. Write to <a href="mailto:info@twinlink.eu">info@twinlink.eu</a>. You can also complain to the Dutch Data Protection Authority, the <a href="https://autoriteitpersoonsgegevens.nl/" target="_blank" rel="noopener">Autoriteit Persoonsgegevens</a>.</p>
+
+        <h2>Who we are</h2>
+        <p>Foundation twinlink.eu, {site.org.street}, {site.org.postcode}, {site.org.country}. KvK {site.org.kvk} · RSIN {site.org.rsin}.</p>
+      </div>
+
+      <aside class="legal__aside">
+        <h2 class="legal__aside-h">Full policies</h2>
+        <p>The foundation’s complete policy documents.</p>
+        <ul>
+          {policies.map((p) => (
+            <li><a href={p.href} target="_blank" rel="noopener"><Icon name="resource" size={20} /><span><strong>{p.label}</strong><small>{p.note}</small></span></a></li>
+          ))}
+        </ul>
+      </aside>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal { display: grid; gap: 2.5rem; }
+  @media (min-width: 64rem) { .legal { grid-template-columns: minmax(0, 1fr) 20rem; gap: 4rem; align-items: start; } }
+  .legal__body { max-width: 44rem; }
+  .legal__body h2 { margin-top: 2.25rem; font-size: 1.5rem; }
+  .legal__body h2:first-child { margin-top: 0; }
+  .legal__body p, .legal__body li { margin-top: 0.875rem; color: var(--color-ink); line-height: 1.65; }
+  .legal__body ul { padding-left: 1.25rem; }
+  .legal__body a { color: var(--color-navy); text-underline-offset: 3px; }
+  .legal__aside { padding: 1.5rem; border-radius: 1.25rem; background: var(--color-mint); }
+  @media (min-width: 64rem) { .legal__aside { position: sticky; top: 6rem; } }
+  .legal__aside-h { font-size: 1.125rem; }
+  .legal__aside p { margin-top: 0.375rem; font-size: 0.9375rem; color: var(--color-muted); }
+  .legal__aside ul { margin: 1rem 0 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
+  .legal__aside a { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.875rem; background: var(--color-surface); color: var(--color-navy); text-decoration: none; border: 1px solid var(--color-line); transition: border-color 200ms ease; }
+  .legal__aside a:hover { border-color: var(--color-green); }
+  .legal__aside span { display: grid; }
+  .legal__aside small { font-size: 0.8125rem; color: var(--color-muted); }
+</style>

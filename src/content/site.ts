@@ -82,23 +82,27 @@ export const home = {
   partners: {
     eyebrow: 'Who we work with',
     headline: 'Good company',
+    // Logos: src/assets/partners/<logo> (taken from the current twinlink.eu site).
     items: [
-      { name: 'University of Twente', role: 'Research on maps, geo-data and digital twins.' },
-      { name: 'TNO', role: 'Energy systems and decision models.' },
-      { name: 'Esri Nederland', role: 'GIS technology for map-based twins.' },
-      { name: 'SmartCity IoT', role: 'Sensors and city data.' },
-      { name: 'Gemeente Almelo', role: 'Testing twins at neighbourhood scale.' },
-      { name: 'GATE Institute', role: 'Research on urban twins and smart buildings.' },
+      { name: 'University of Twente', role: 'Knowledge partner for geospatial innovation, digital twins and applied research.', logo: 'university-of-twente.svg', href: 'https://www.utwente.nl/' },
+      { name: 'TNO', role: 'Research and innovation partner for energy systems, models and decision-support tools.', logo: 'tno.png', href: 'https://www.tno.nl/' },
+      { name: 'Esri Nederland', role: 'Geospatial technology partner supporting GIS-based digital twin applications.', logo: 'esri-nederland.png', href: 'https://www.esri.nl/' },
+      { name: 'SmartCity IoT', role: 'Technology partner for smart-city data, IoT integration and local digital twin applications.', logo: 'smartcity-iot.png', href: 'https://smartcity-iot.nl/' },
+      { name: 'Gemeente Almelo', role: 'Local government collaborator for neighbourhood-scale digital twin use cases.', logo: 'gemeente-almelo.png', href: 'https://www.almelo.nl/' },
+      { name: 'GATE Institute', role: 'Research collaborator in urban digital twins, smart buildings and data-driven innovation.', logo: 'gate.png', href: 'https://gate-ai.eu/' },
+      { name: 'European initiatives', role: 'Connection to European work on local digital twins, interoperability and reuse.', logo: 'european-union.png' },
     ],
   },
   news: {
     eyebrow: 'Lately',
     headline: 'What’s happening',
     items: [
-      { title: 'GeoSofia Conference', body: 'We present our twin work in Sofia, together with partners.', when: '2026', status: 'Upcoming' },
-      { title: 'EU LDT Toolbox', body: 'Our starter kit, offered to Europe as a ready-made recipe.', when: 'Ongoing', status: 'Ongoing' },
-      { title: 'University of Twente', body: 'Open twin foundations, brought into research and teaching.', when: '2026', status: 'Ongoing' },
-      { title: 'MIM8', body: 'Every project, the same shared language.', when: 'In progress', status: 'In progress' },
+      { title: 'twinlink.eu at Smart City Expo Barcelona 2026', body: 'We joined the Smart City Expo World Congress to meet cities, researchers and technology providers working on local digital twins, AI and interoperability.', when: '3–5 Nov 2026', status: 'Attended', href: 'https://www.smartcityexpo.com/' },
+      { title: 'Rakibun Athid wins the 2026 EAASI Outstanding Thesis Award', body: 'Our Digital Transformation Lead’s University of Twente research uses LiDAR, 3D building models and local digital twins for sustainable urban planning. It also won Best Paper at GeoSofia 2026.', when: '2026', status: 'Award', href: 'https://www.utwente.nl/en/itc/about-itc/news-events/2026/11/1266755/eaasi-outstanding-thesis-award-2026-for-rakibun-athid' },
+      { title: 'GeoSofia Conference', body: 'We and our partners presented our work on digital twins, interoperability and smart cities in Sofia.', when: '2026', status: 'Completed' },
+      { title: 'EU LDT Toolbox', body: 'Exploring how our open twin framework can be offered to Europe as a ready-made recipe.', when: 'Ongoing', status: 'Ongoing' },
+      { title: 'University of Twente collaboration', body: 'Making open twin foundations visible in research and practice.', when: '2026', status: 'Ongoing' },
+      { title: 'MIM8 alignment', body: 'Connecting every twinlink.eu project to one shared language for local digital twins.', when: 'In progress', status: 'In progress' },
     ],
   },
   closing: {
@@ -112,7 +116,7 @@ export const about = {
   seo: { title: 'About | twinlink.eu', description: 'twinlink.eu is an independent non-profit that collects open local digital twins and the parts behind them.' },
   eyebrow: 'About us',
   headline: 'We make the second twin easier than the first.',
-  body: 'twinlink.eu is an independent non-profit from Hengelo. We collect open local digital twins, the parts they are built from and the lessons learned, and share them so public bodies across Europe can decide better, sooner.',
+  body: 'twinlink.eu is an independent non-profit, closely aligned with the University of Twente. We collect open local digital twins, the parts they are built from and the lessons learned, and share them so public bodies across Europe can decide better, sooner.',
   why: [
     { title: 'Decide on facts', body: 'Test a plan against real data before committing to it.' },
     { title: 'Get there faster', body: 'Start from parts that already work, not from a blank page.' },

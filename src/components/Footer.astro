@@ -1,4 +1,7 @@
 ---
+import { Image } from 'astro:assets';
+import logo from '../assets/twinlink-logo.png';
+import anbiLogo from '../assets/anbi-logo.png';
 import Icon from './Icon.astro';
 import { nav, site } from '../content/site';
 import { themes } from '../content/catalog';
@@ -7,7 +10,8 @@ const year = new Date().getFullYear();
 <footer class="ftr">
   <div class="container-site ftr__grid">
     <div class="ftr__brand">
-      <p class="ftr__name">twinlink<span>.eu</span></p>
+      <!-- The full logo, on a white card so its navy lettering reads on the dark footer. -->
+      <a href="/" class="ftr__logo" aria-label="twinlink.eu home"><Image src={logo} alt="twinlink.eu" width={300} loading="lazy" /></a>
       <p class="ftr__tag">{site.tagline}</p>
       <p class="ftr__desc">{site.description}</p>
       <a href={site.linkedin} rel="noopener" class="ftr__social"><Icon name="linkedin" size={20} /> LinkedIn</a>
@@ -26,6 +30,7 @@ const year = new Date().getFullYear();
         <li><a href="/about">About us</a></li>
         <li><a href="/team">Team</a></li>
         <li><a href="/contact">Contact</a></li>
+        <li><a href="/privacy">Privacy &amp; cookies</a></li>
       </ul>
       <address class="ftr__addr">
         {site.org.street}<br />{site.org.postcode}<br />{site.org.country}
@@ -34,7 +39,11 @@ const year = new Date().getFullYear();
   </div>
   <div class="container-site ftr__bottom">
     <p>© {year} twinlink.eu</p>
-    <p>KvK {site.org.kvk} · RSIN {site.org.rsin} · PIC {site.org.pic}</p>
+    <p class="ftr__anbi">
+      <!-- ANBI status (Belastingdienst); the logo is the one used on the previous twinlink.eu site. -->
+      <a href="https://anbi.belastingdienst.nl/" target="_blank" rel="noopener" class="ftr__anbi-logo" aria-label="ANBI: check our status in the Belastingdienst ANBI register"><Image src={anbiLogo} alt="ANBI – Algemeen Nut Beogende Instelling" width={120} loading="lazy" /></a>
+      <span>Registered ANBI · KvK {site.org.kvk} · RSIN {site.org.rsin} · PIC {site.org.pic}</span>
+    </p>
   </div>
 </footer>
 
@@ -42,9 +51,9 @@ const year = new Date().getFullYear();
   .ftr { margin-top: auto; background: var(--color-navy-deep); color: #d5e0ef; }
   .ftr__grid { display: grid; gap: 2.5rem; padding-block: 3.5rem 2.5rem; }
   @media (min-width: 48rem) { .ftr__grid { grid-template-columns: 2fr 1fr 1fr 1fr; } }
-  .ftr__name { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; color: #fff; }
-  .ftr__name span { color: var(--color-green-bright); }
-  .ftr__tag { margin-top: 0.25rem; font-weight: 600; color: var(--color-green-bright); }
+  .ftr__logo { display: inline-flex; padding: 0.625rem 1rem; border-radius: 0.875rem; background: #fff; }
+  .ftr__logo img { height: 3rem; width: auto; }
+  .ftr__tag { margin-top: 1rem; font-weight: 600; color: var(--color-green-bright); }
   .ftr__desc { margin-top: 1rem; max-width: 26rem; font-size: 0.9375rem; color: #b6c6dc; }
   .ftr__social { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.25rem; font-weight: 600; color: #fff; text-decoration: none; }
   .ftr__h { font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; }
@@ -52,5 +61,8 @@ const year = new Date().getFullYear();
   .ftr ul a { color: #d5e0ef; text-decoration: none; font-size: 0.9375rem; }
   .ftr ul a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
   .ftr__addr { margin-top: 1.25rem; font-style: normal; font-size: 0.875rem; color: #b6c6dc; }
-  .ftr__bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; padding-block: 1.25rem 1.75rem; border-top: 1px solid rgb(255 255 255 / 0.1); font-size: 0.8125rem; color: #8fa3bf; }
+  .ftr__anbi { display: inline-flex; align-items: center; gap: 0.75rem; }
+  .ftr__anbi-logo { display: inline-flex; flex: none; }
+  .ftr__anbi-logo img { height: 2.75rem; width: auto; }
+  .ftr__bottom { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; padding-block: 1.25rem 1.75rem; border-top: 1px solid rgb(255 255 255 / 0.1); font-size: 0.8125rem; color: #8fa3bf; }
 </style>
