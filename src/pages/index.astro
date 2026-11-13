@@ -82,7 +82,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
         <h2>See them at work.</h2>
         <p class="lede mt-3">Short films of what we build: the Data Lab, twins of a village, a house and a wind farm, and the tools behind them.</p>
       </div>
-      <div class="films__grid">
+      <div class="films__grid" data-swipe>
         {films.map((f) => (
           <article class="film" data-reveal>
             <button type="button" class="film__screen" data-watch-src={f.clip!.src} data-watch-poster={f.clip!.poster} data-watch-title={f.title} aria-label={`Watch the video: ${f.title}`}>
@@ -109,7 +109,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
         <h2>{h.try.headline}</h2>
         <p class="lede mt-3">{h.try.body}</p>
       </div>
-      <div class="try__grid">
+      <div class="try__grid" data-swipe>
         {demos.map((d, i) => (
           <article class="tcard" data-reveal>
             <button type="button" class={`tcard__screen tcard__screen--${i}`} data-demo={d.demo} data-demo-title={d.title} aria-label={`Try ${d.title}`}>
@@ -178,7 +178,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
         <h2>{h.ecosystem.headline}</h2>
         <p class="lede mt-3">{h.ecosystem.body}</p>
       </div>
-      <ol class="levels__row" data-reveal>
+      <ol class="levels__row" data-swipe data-reveal>
         {h.ecosystem.levels.map((l, i) => (
           <li class={`level level--${i}`}>
             <span class="level__badge">{l.label}</span>
@@ -198,7 +198,7 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
         <p class="eyebrow">{h.audiences.eyebrow}</p>
         <h2>{h.audiences.headline}</h2>
       </div>
-      <div class="doors">
+      <div class="doors" data-swipe>
         {h.audiences.items.map((a) => (
           <a href={a.href} class="door" data-reveal>
             <span class="door__title">{a.title}</span>
@@ -218,11 +218,14 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
         <h2>{h.news.headline}</h2>
         <p class="pn__more"><a href="/about#partners">Our partners and collaborators<Icon name="arrow" size={16} /></a></p>
       </div>
-      <ul class="news" data-reveal>
+      <div class="pn__list" data-reveal>
+      <ul class="news" data-news>
         {h.news.items.map((n) => (
           <li><span class="news__when">{n.when}</span><div><strong>{n.title}</strong><p>{n.body}</p>{n.href && <a class="news__more" href={n.href} target="_blank" rel="noopener">Read more<Icon name="arrow" size={16} /></a>}</div><span class="news__status">{n.status}</span></li>
         ))}
       </ul>
+      {h.news.items.length > 4 && <button type="button" class="news__all" data-news-all>Show all news ({h.news.items.length})</button>}
+      </div>
     </div>
   </section>
 
@@ -241,6 +244,12 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
 </Base>
 
 <script>
+  // News on phones: the first four, then "Show all news".
+  document.querySelector('[data-news-all]')?.addEventListener('click', (e) => {
+    document.querySelector('[data-news]')?.classList.add('is-open');
+    (e.currentTarget as HTMLElement).remove();
+  });
+
   // Film loops: play only while on screen (and never with reduced motion or data saver).
   {
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -355,6 +364,15 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   @media (min-width: 64rem) { .hero__grid { grid-template-columns: minmax(0, 36rem); gap: 3rem; } .hero { padding-block: 3.5rem 6.5rem; } }
   .hero__title { margin-top: 1rem; }
   .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+  @media (max-width: 39.99rem) {
+    .hero { padding-block: 1.75rem 4.25rem; }
+    .hero__title { font-size: clamp(2.125rem, 9.5vw, 2.5rem); margin-top: 0.75rem; }
+    .hero .lede { margin-top: 1rem; font-size: 1.0625rem; }
+    /* Main action full width, the other two side by side. */
+    .hero__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+    .hero__actions > :first-child { grid-column: 1 / -1; }
+    .hero__actions .btn { justify-content: center; padding-inline: 0.75rem; font-size: 0.9375rem; white-space: nowrap; }
+  }
 
   /* Try it */
   .try { background: var(--color-navy-deep); color: #e6eef8; padding-top: 0; }
@@ -431,6 +449,14 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   .theme__label { font-size: 1.25rem; font-weight: 700; }
   .theme__q { font-size: 1rem; color: var(--color-muted); }
   .theme__count { margin-top: 0.5rem; font-size: 0.875rem; font-weight: 700; color: var(--tone); }
+  @media (max-width: 39.99rem) {
+    .themes__grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.75rem; }
+    .theme { gap: 0.375rem; padding: 1rem; border-radius: 1.125rem; }
+    .theme__icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; }
+    .theme__label { font-size: 1rem; line-height: 1.25; }
+    .theme__q { display: none; }
+    .theme__count { margin-top: 0.25rem; font-size: 0.8125rem; }
+  }
 
   /* Shelves */
   .shelves { background: var(--color-mint); }
@@ -443,6 +469,14 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   .shelf__icon { color: var(--color-green); }
   .shelf__label { font-size: 1.125rem; font-weight: 700; }
   .shelf__intro { font-size: 0.9375rem; color: var(--color-muted); }
+  @media (max-width: 39.99rem) {
+    .shelves__grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1.75rem; }
+    .shelf { padding: 1.125rem 1rem; border-radius: 1.125rem; }
+    .shelf:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .shelf__n { font-size: 1.75rem; right: 0.875rem; top: 0.625rem; }
+    .shelf__label { font-size: 1rem; }
+    .shelf__intro { font-size: 0.8125rem; }
+  }
 
   /* Levels */
   .levels__row { position: relative; display: grid; gap: 1rem; margin: 2.5rem 0 0; padding: 0; list-style: none; }
@@ -473,14 +507,22 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   .pn__more { margin-top: 1rem; }
   .pn__more a { display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 600; color: var(--color-navy); }
   .pn h2 { margin-top: 0.75rem; font-size: clamp(1.5rem, 2.6vw, 2rem); }
-  @media (min-width: 40rem) { .partners { grid-template-columns: 1fr 1fr; } }
   .news { display: grid; margin: 0; padding: 0; list-style: none; }
   .news li { display: grid; grid-template-columns: 6rem 1fr auto; gap: 1rem; align-items: start; padding-block: 1rem; border-bottom: 1px solid var(--color-line); }
   .news__more { display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.375rem; font-size: 0.875rem; font-weight: 600; color: var(--color-navy); }
   .news__when { font-weight: 700; color: var(--color-navy); }
   .news p { margin-top: 0.25rem; font-size: 0.9375rem; color: var(--color-muted); }
   .news__status { padding: 0.125rem 0.625rem; border-radius: 999px; background: var(--color-mint); font-size: 0.75rem; font-weight: 700; color: #08744a; white-space: nowrap; }
-  @media (max-width: 40rem) { .news li { grid-template-columns: 1fr; gap: 0.25rem; } .news__status { justify-self: start; } }
+  .news__all { display: none; }
+  @media (max-width: 40rem) {
+    /* Date and status share the top line; the text runs full width below. */
+    .news li { grid-template-columns: 1fr auto; gap: 0.25rem 0.75rem; padding-block: 1.125rem; }
+    .news li > div { grid-column: 1 / -1; grid-row: 2; }
+    .news__when { font-size: 0.875rem; }
+    .news p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .news:not(.is-open) li:nth-child(n+5) { display: none; }
+    .news__all { display: block; width: 100%; margin-top: 1rem; padding: 0.75rem; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-paper); font: inherit; font-weight: 600; color: var(--color-navy); cursor: pointer; }
+  }
 
   /* Closing */
   .closing { display: grid; gap: 1.5rem; align-items: center; padding: 2.5rem 2rem; border-radius: 2rem; background: linear-gradient(135deg, var(--color-navy), #134a8e 60%, #0e7f6a); color: #e6eef8; }

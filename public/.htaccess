@@ -1,0 +1,51 @@
+# twinlink.eu on Plesk (Apache). Old WordPress addresses point to their new pages, so links
+# shared before the switch keep working. Permanent (301) redirects.
+# Https: use Plesk > Hosting & DNS > Hosting > "Permanent SEO-safe 301 redirect from HTTP to HTTPS".
+DirectorySlash Off
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Old pages
+  RewriteRule ^(wp-admin/)?over/?$ /about [L,R=301]
+  RewriteRule ^about-us/?$ /about [L,R=301]
+  RewriteRule ^our-team/?$ /team [L,R=301]
+  RewriteRule ^nl_nl_formal/404-2/?$ /team [L,R=301]
+  RewriteRule ^(wp-admin/)?faq/?$ /about [L,R=301]
+  RewriteRule ^(nl_nl_formal/)?(vacatures|vacancies)/?$ /team [L,R=301]
+  RewriteRule ^(nl_nl_formal/)?(kennishub|knowledge-hub)/?$ /knowledge [L,R=301]
+  RewriteRule ^wp-admin/contact/?$ /contact [L,R=301]
+  RewriteRule ^our-work/?$ /explore [L,R=301]
+  RewriteRule ^lokale-digitale-tweelingen/?$ /digital-twins [L,R=301]
+  RewriteRule ^local-digital-twin/?$ /explore/what-is-a-local-digital-twin [L,R=301]
+  RewriteRule ^nationale-ldt-appwinkel(-2)?/?$ /explore/national-ldt-app-store [L,R=301]
+  RewriteRule ^eu-ldt-toolbox/?$ /explore/eu-ldt-toolbox [L,R=301]
+
+  # Old documents
+  RewriteRule ^wp-content/uploads/2026/03/Privacy-Policy-twinlink\.eu_\.pdf$ /legal/privacy-policy-twinlink.eu.pdf [L,R=301]
+  RewriteRule ^wp-content/uploads/2026/03/Cookie-Policy-twinlink\.eu_\.pdf$ /legal/cookie-policy-twinlink.eu.pdf [L,R=301]
+  RewriteRule ^wp-content/uploads/2026/03/Geanonimiseerd-AFSCHRIFT.*\.pdf$ /legal/statutes-twinlink.eu.pdf [L,R=301]
+
+  # Pages live in folders (about/index.html) but have addresses without a slash (/about).
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.+)/$ /$1 [L,R=301]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_FILENAME}/index.html -f
+  RewriteRule ^(.+)$ /$1/index.html [L]
+
+  # Anything else from WordPress (feeds, wp-json, wp-login) goes to the home page
+  RewriteRule ^(feed|comments/feed|wp-json|wp-login\.php|wp-admin)(/.*)?$ / [L,R=301]
+</IfModule>
+
+ErrorDocument 404 /404.html
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  # Images, fonts, scripts and styles have content hashes in their names: cache them for a year.
+  <FilesMatch "\.(js|css|webp|avif|png|jpg|jpeg|svg|woff2|mp4)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>

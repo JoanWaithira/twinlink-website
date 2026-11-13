@@ -58,5 +58,13 @@ const type = typeOf(item.type);
   .icard__themes li { padding: 0.125rem 0.5rem; border-radius: 999px; background: var(--color-paper); font-size: 0.75rem; font-weight: 600; color: var(--color-muted); }
   .icard__source { border-color: color-mix(in srgb, var(--color-teal) 40%, var(--color-line)); color: var(--color-teal); }
   .icard__actions { position: relative; z-index: 1; margin-top: auto; padding-top: 0.5rem; }
+  /* Phones: tighter cards. The whole card opens the item, so a plain "Read more" link is not needed. */
+  @media (max-width: 47.99rem) {
+    .icard { gap: 0.5rem; padding: 1.125rem; }
+    .icard__icon { width: 2.25rem; height: 2.25rem; border-radius: 0.75rem; }
+    .icard__title { font-size: 1.0625rem; }
+    .icard__summary { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .icard__actions:has(> .link-arrow) { display: none; }
+  }
   .icard--lg .icard__title { font-size: 1.375rem; }
 </style>

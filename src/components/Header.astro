@@ -21,12 +21,14 @@ const active = (href: string) => path === href || path.startsWith(href + '/');
     </nav>
     <a href="/contact" class="btn btn--primary btn--sm hdr__cta">Contact</a>
     <button type="button" class="hdr__menu" aria-expanded="false" aria-controls="site-nav" data-menu>
-      <Icon name="menu" /><span class="sr-only">Menu</span>
+      <Icon name="menu" class="hdr__menu-open" /><Icon name="close" class="hdr__menu-close" /><span class="sr-only">Menu</span>
     </button>
   </div>
 </header>
 
 <style>
+  .hdr__menu :global(.hdr__menu-close), .hdr__menu[aria-expanded='true'] :global(.hdr__menu-open) { display: none; }
+  .hdr__menu[aria-expanded='true'] :global(.hdr__menu-close) { display: block; }
   .hdr { position: sticky; top: 0; z-index: 50; transition: background-color 300ms ease, box-shadow 300ms ease; }
   .hdr[data-scrolled] { background: color-mix(in srgb, var(--color-paper) 86%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 1px 0 var(--color-line); }
   .hdr__bar { display: flex; align-items: center; gap: 1.5rem; height: 4.75rem; }
@@ -68,4 +70,8 @@ const active = (href: string) => path === href || path.startsWith(href + '/');
     menu.setAttribute('aria-expanded', String(open));
     navEl.toggleAttribute('data-open', open);
   });
+  // Close the menu with Escape or by tapping a link in it.
+  const close = () => { menu.setAttribute('aria-expanded', 'false'); navEl.removeAttribute('data-open'); };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  navEl.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('a')) close(); });
 </script>

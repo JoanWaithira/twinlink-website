@@ -147,8 +147,8 @@ export const contact = {
     { title: 'Working together', body: 'For towns, regions, researchers and builders who want to make or share a twin.' },
     { title: 'Knowledge and projects', body: 'For questions about our twins, tools, videos or how to get started.' },
   ],
-  // The form (same fields as the previous twinlink.eu) is sent with Netlify Forms. Netlify emails each
-  // message to info@twinlink.eu: set this up once in Netlify > Site > Forms > Form notifications.
+  // The form (same fields as the previous twinlink.eu) posts to public/contact.php, which emails
+  // info@twinlink.eu from the Plesk hosting. On the Netlify preview, Netlify Forms catches it instead.
   form: {
     name: 'contact',
     to: 'info@twinlink.eu',

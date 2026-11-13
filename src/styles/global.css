@@ -139,3 +139,21 @@
   .fx-word { opacity: 1; transform: none; filter: none; }
   .fx-spot::after, .eyebrow::before { animation: none; }
 }
+
+/* Swipe rows (phones): a grid marked data-swipe becomes a sideways row of cards that snap into
+   place, bleeding to the screen edge so the next card peeks in. Dots are added by lib/swipe.ts. */
+@media (max-width: 47.99rem) {
+  [data-swipe] {
+    display: flex !important; gap: 0.875rem; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: 1.25rem; scrollbar-width: none;
+    margin-inline: -1.25rem; padding-inline: 1.25rem; padding-bottom: 0.25rem;
+  }
+  [data-swipe]::-webkit-scrollbar { display: none; }
+  [data-swipe] > * { flex: 0 0 84%; scroll-snap-align: start; }
+  /* Cards beside the screen are already there when swiped to, not faded in late. */
+  [data-swipe] > .reveal-pending { opacity: 1; transform: none; }
+  .swipe-dots { display: flex; justify-content: center; gap: 0.375rem; margin-top: 1rem; }
+  .swipe-dots button { width: 0.5rem; height: 0.5rem; padding: 0; border: 0; border-radius: 999px; background: currentColor; opacity: 0.25; cursor: pointer; transition: width 250ms ease, opacity 250ms ease; }
+  .swipe-dots button[aria-current='true'] { width: 1.25rem; opacity: 0.9; }
+}
+@media (min-width: 48rem) { .swipe-dots { display: none; } }

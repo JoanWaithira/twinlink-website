@@ -1,3 +1,0 @@
-# Preview of the new twinlink.eu site: not for search engines yet.
-User-agent: *
-Disallow: /

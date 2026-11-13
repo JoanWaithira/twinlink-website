@@ -8,8 +8,9 @@ import { contact as c, site } from '../content/site';
   <PageHead eyebrow={c.eyebrow} title={c.headline} intro={c.body} crumbs={[{ label: 'Contact', href: '/contact' }]} />
   <section class="section pt-6">
     <div class="container-site contact">
-      <!-- Contact form (Netlify Forms, see site.ts). Without JavaScript it posts and lands on Netlify's thank-you page. -->
-      <form class="card cform" name={c.form.name} method="POST" data-netlify="true" netlify-honeypot="company-website" data-contact-form data-sent={c.form.sent} data-failed={c.form.failed} data-reveal>
+      <!-- Contact form: public/contact.php emails it to info@twinlink.eu on the Plesk hosting. On the Netlify
+           preview, Netlify Forms catches the same post (data-netlify). Works without JavaScript too. -->
+      <form class="card cform" name={c.form.name} method="POST" action="/contact.php" data-netlify="true" netlify-honeypot="company-website" data-contact-form data-sent={c.form.sent} data-failed={c.form.failed} data-reveal>
         <input type="hidden" name="form-name" value={c.form.name} />
         <p class="cform__hp" aria-hidden="true"><label>Leave this empty <input name="company-website" tabindex="-1" autocomplete="off" /></label></p>
         <h2 class="text-[1.375rem]">Send us a message</h2>
@@ -80,17 +81,20 @@ import { contact as c, site } from '../content/site';
 </style>
 
 <script>
-  // Send without leaving the page; Netlify Forms takes url-encoded posts to any path.
+  // Send without leaving the page (contact.php answers with JSON). Coming back from a no-JavaScript
+  // post, ?sent=1 or ?sent=0 shows the result.
   const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
   const status = document.querySelector<HTMLElement>('[data-contact-status]');
+  const show = (ok: boolean) => { status!.hidden = false; status!.dataset.ok = String(ok); status!.textContent = (ok ? form!.dataset.sent : form!.dataset.failed) ?? ''; };
+  const sent = new URLSearchParams(location.search).get('sent');
+  if (sent) { show(sent === '1'); history.replaceState(null, '', location.pathname); }
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
     button.disabled = true;
-    const show = (ok: boolean) => { status!.hidden = false; status!.dataset.ok = String(ok); status!.textContent = (ok ? form.dataset.sent : form.dataset.failed) ?? ''; };
     try {
       const body = new URLSearchParams(new FormData(form) as unknown as Record<string, string>).toString();
-      const res = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+      const res = await fetch(form.action, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' }, body });
       show(res.ok);
       if (res.ok) form.reset();
     } catch { show(false); }
