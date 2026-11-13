@@ -45,6 +45,8 @@ const countOf = (id: ItemType) => items.filter((i) => i.type === id).length;
   .cat__group button { padding: 0.375rem 0.75rem; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--color-ink); cursor: pointer; transition: all 200ms ease; }
   .cat__group button:hover { border-color: var(--color-green); }
   .cat__group button[aria-pressed='true'] { background: var(--color-navy); border-color: var(--color-navy); color: #fff; }
+  .cat__n { margin-left: 0.375rem; padding: 0 0.4rem; border-radius: 999px; background: var(--color-mint); font-size: 0.75rem; color: #08744a; }
+  .cat__group button[aria-pressed='true'] .cat__n { background: rgb(255 255 255 / 0.18); color: #fff; }
   .cat__count { margin: 1rem 0 0.75rem; font-size: 0.875rem; color: var(--color-muted); }
   .cat__grid { display: grid; gap: 1rem; }
   @media (min-width: 40rem) { .cat__grid { grid-template-columns: repeat(2, 1fr); } }

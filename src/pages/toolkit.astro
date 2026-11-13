@@ -1,0 +1,20 @@
+---
+// Toolkit: tools, projects and resources on one page. Switch with the type buttons, or link
+// straight to one (?type=tool, ?type=project, ?type=resource; the old /tools, /projects and
+// /resources addresses redirect here, see astro.config.mjs).
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Catalog from '../components/Catalog.astro';
+import { items, type ItemType } from '../content/catalog';
+import { toolkit as k } from '../content/site';
+const kinds: ItemType[] = ['tool', 'project', 'resource'];
+const list = items.filter((i) => kinds.includes(i.type));
+---
+<Base title={k.seo.title} description={k.seo.description}>
+  <PageHead eyebrow={k.eyebrow} title={k.headline} intro={k.intro} crumbs={[{ label: 'Toolkit', href: '/toolkit' }]} />
+  <section class="pb-16">
+    <div class="container-site">
+      <Catalog items={list} onlyTypes={kinds} />
+    </div>
+  </section>
+</Base>

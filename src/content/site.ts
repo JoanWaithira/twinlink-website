@@ -72,9 +72,9 @@ export const home = {
     headline: 'Pick the door that is yours.',
     items: [
       { title: 'I work for a city or region', body: 'See what a twin can show you about your streets, homes and energy.', href: '/digital-twins', cta: 'Open a twin' },
-      { title: 'I coordinate a national programme', body: 'Line up local efforts so they add up across the country.', href: '/tools', cta: 'See the tools' },
+      { title: 'I coordinate a national programme', body: 'Line up local efforts so they add up across the country.', href: '/toolkit?type=tool', cta: 'See the tools' },
       { title: 'I do research', body: 'Bring your methods and models, and take ours.', href: '/knowledge', cta: 'Read and watch' },
-      { title: 'I build software', body: 'Make parts others can plug in, using shared agreements.', href: '/resources', cta: 'See the agreements' },
+      { title: 'I build software', body: 'Make parts others can plug in, using shared agreements.', href: '/toolkit?type=resource', cta: 'See the agreements' },
     ],
   },
   partners: {
