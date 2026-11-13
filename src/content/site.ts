@@ -95,6 +95,7 @@ export const home = {
     eyebrow: 'Lately',
     headline: 'What’s happening',
     items: [
+      { title: 'twinlink.eu at the Apply AI Summit, Brussels', body: 'We are heading to the European Commission’s Apply AI Summit to talk about how AI and local digital twins can help cities and regions decide better.', when: '17 Nov 2026', status: 'Upcoming', href: 'https://digital-skills-jobs.europa.eu/en/latest/events/apply-ai-summit-2026' },
       { title: 'twinlink.eu at Smart City Expo Barcelona 2026', body: 'We joined the Smart City Expo World Congress to meet cities, researchers and technology providers working on local digital twins, AI and interoperability.', when: '3–5 Nov 2026', status: 'Attended', href: 'https://www.smartcityexpo.com/' },
       { title: 'Rakibun Athid wins the 2026 EAASI Outstanding Thesis Award', body: 'Our Digital Transformation Lead’s University of Twente research uses LiDAR, 3D building models and local digital twins for sustainable urban planning. It also won Best Paper at GeoSofia 2026.', when: '2026', status: 'Award', href: 'https://www.utwente.nl/en/itc/about-itc/news-events/2026/11/1266755/eaasi-outstanding-thesis-award-2026-for-rakibun-athid' },
       { title: 'GeoSofia Conference', body: 'We and our partners presented our work on digital twins, interoperability and smart cities in Sofia.', when: '2026', status: 'Completed' },
@@ -146,4 +147,12 @@ export const contact = {
     { title: 'Working together', body: 'For towns, regions, researchers and builders who want to make or share a twin.' },
     { title: 'Knowledge and projects', body: 'For questions about our twins, tools, videos or how to get started.' },
   ],
+  // The form (same fields as the previous twinlink.eu) is sent with Netlify Forms. Netlify emails each
+  // message to info@twinlink.eu: set this up once in Netlify > Site > Forms > Form notifications.
+  form: {
+    name: 'contact',
+    to: 'info@twinlink.eu',
+    sent: 'Thank you. Your message is on its way to info@twinlink.eu and we will get back to you soon.',
+    failed: 'Sorry, your message could not be sent. Please email us at info@twinlink.eu instead.',
+  },
 };

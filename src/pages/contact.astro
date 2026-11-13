@@ -8,36 +8,92 @@ import { contact as c, site } from '../content/site';
   <PageHead eyebrow={c.eyebrow} title={c.headline} intro={c.body} crumbs={[{ label: 'Contact', href: '/contact' }]} />
   <section class="section pt-6">
     <div class="container-site contact">
-      <div class="contact__topics">
-        {c.topics.map((t) => (
-          <div class="card" data-reveal>
-            <h2 class="text-[1.25rem]">{t.title}</h2>
-            <p class="mt-2 text-muted">{t.body}</p>
-          </div>
-        ))}
-        <a href={site.linkedin} rel="noopener" class="card contact__li" data-reveal>
+      <!-- Contact form (Netlify Forms, see site.ts). Without JavaScript it posts and lands on Netlify's thank-you page. -->
+      <form class="card cform" name={c.form.name} method="POST" data-netlify="true" netlify-honeypot="company-website" data-contact-form data-sent={c.form.sent} data-failed={c.form.failed} data-reveal>
+        <input type="hidden" name="form-name" value={c.form.name} />
+        <p class="cform__hp" aria-hidden="true"><label>Leave this empty <input name="company-website" tabindex="-1" autocomplete="off" /></label></p>
+        <h2 class="text-[1.375rem]">Send us a message</h2>
+        <p class="mt-1 text-muted">It goes straight to <a href={`mailto:${c.form.to}`}>{c.form.to}</a>.</p>
+        <div class="cform__row">
+          <label class="cform__field"><span>Name <i aria-hidden="true">*</i></span><input name="name" autocomplete="name" required /></label>
+          <label class="cform__field"><span>E-mail <i aria-hidden="true">*</i></span><input type="email" name="email" autocomplete="email" required /></label>
+        </div>
+        <label class="cform__field"><span>Subject</span><input name="subject" list="cform-topics" /></label>
+        <datalist id="cform-topics">{c.topics.map((t) => <option value={t.title} />)}</datalist>
+        <label class="cform__field"><span>Message <i aria-hidden="true">*</i></span><textarea name="message" rows="6" required></textarea></label>
+        <p class="cform__note">We use your details only to answer you. See <a href="/privacy">Privacy &amp; cookies</a>.</p>
+        <div class="cform__actions">
+          <button type="submit" class="btn btn--primary">Send message<Icon name="arrow" size={18} /></button>
+          <p class="cform__status" role="status" aria-live="polite" data-contact-status hidden></p>
+        </div>
+      </form>
+
+      <div class="contact__side">
+        <a href={site.linkedin} target="_blank" rel="noopener" class="card contact__li" data-reveal>
           <Icon name="linkedin" size={28} />
           <span><strong>Message us on LinkedIn</strong><span>The quickest way to reach the team.</span></span>
         </a>
+        <a href={`mailto:${c.form.to}`} class="card contact__mail" data-reveal>
+          <Icon name="mail" size={24} />
+          <span><strong>Or email us</strong><span>{c.form.to}</span></span>
+        </a>
+        <aside class="card contact__addr" data-reveal>
+          <Icon name="pin" size={26} class="text-[var(--color-green)]" />
+          <h2 class="text-[1.125rem] mt-3">Visit or write</h2>
+          <address class="mt-2 not-italic">{site.org.street}<br />{site.org.postcode}<br />{site.org.country}</address>
+          <dl class="mt-4 grid gap-1 text-[0.875rem] text-muted">
+            <div>KvK {site.org.kvk}</div><div>RSIN {site.org.rsin}</div><div>PIC {site.org.pic}</div>
+          </dl>
+        </aside>
       </div>
-      <aside class="card contact__addr" data-reveal>
-        <Icon name="pin" size={26} class="text-[var(--color-green)]" />
-        <h2 class="text-[1.125rem] mt-3">Visit or write</h2>
-        <address class="mt-2 not-italic">{site.org.street}<br />{site.org.postcode}<br />{site.org.country}</address>
-        <dl class="mt-4 grid gap-1 text-[0.875rem] text-muted">
-          <div>KvK {site.org.kvk}</div><div>RSIN {site.org.rsin}</div><div>PIC {site.org.pic}</div>
-        </dl>
-      </aside>
     </div>
   </section>
 </Base>
 
 <style>
   .contact { display: grid; gap: 1rem; }
-  @media (min-width: 64rem) { .contact { grid-template-columns: 2fr 1fr; gap: 1.5rem; } }
-  .contact__topics { display: grid; gap: 1rem; }
-  @media (min-width: 48rem) { .contact__topics { grid-template-columns: 1fr 1fr; } }
-  .contact__li { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; text-decoration: none; background: var(--color-navy); color: #fff; border-color: var(--color-navy); }
-  .contact__li span { display: grid; }
+  @media (min-width: 64rem) { .contact { grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start; } }
+  .contact__side { display: grid; gap: 1rem; }
+  .contact__li, .contact__mail { display: flex; align-items: center; gap: 1rem; text-decoration: none; }
+  .contact__li { background: var(--color-navy); color: #fff; border-color: var(--color-navy); }
+  .contact__mail { color: var(--color-navy); }
+  .contact__mail:hover { border-color: var(--color-green); }
+  .contact__li span, .contact__mail span { display: grid; }
   .contact__li span span { font-size: 0.9375rem; color: #b6c6dc; }
+  .contact__mail span span { font-size: 0.9375rem; color: var(--color-muted); }
+
+  .cform { display: grid; gap: 1rem; padding: 1.75rem; }
+  .cform a { color: var(--color-navy); }
+  .cform__hp { position: absolute; left: -9999px; }
+  .cform__row { display: grid; gap: 1rem; }
+  @media (min-width: 40rem) { .cform__row { grid-template-columns: 1fr 1fr; } }
+  .cform__field { display: grid; gap: 0.375rem; font-size: 0.875rem; font-weight: 700; color: var(--color-navy); }
+  .cform__field i { font-style: normal; color: #08744a; }
+  .cform__field input, .cform__field textarea { width: 100%; padding: 0.75rem 0.875rem; border-radius: 0.75rem; border: 1.5px solid var(--color-line); background: var(--color-paper); font: inherit; font-size: 1rem; font-weight: 400; color: var(--color-ink); transition: border-color 200ms ease, box-shadow 200ms ease; }
+  .cform__field textarea { resize: vertical; min-height: 9rem; }
+  .cform__field input:focus, .cform__field textarea:focus { outline: none; border-color: var(--color-green); box-shadow: 0 0 0 4px rgb(18 183 106 / 0.15); }
+  .cform__note { font-size: 0.8125rem; color: var(--color-muted); }
+  .cform__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+  .cform__status { font-size: 0.9375rem; font-weight: 600; }
+  .cform__status[data-ok='true'] { color: #08744a; }
+  .cform__status[data-ok='false'] { color: #b42318; }
 </style>
+
+<script>
+  // Send without leaving the page; Netlify Forms takes url-encoded posts to any path.
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  const status = document.querySelector<HTMLElement>('[data-contact-status]');
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    button.disabled = true;
+    const show = (ok: boolean) => { status!.hidden = false; status!.dataset.ok = String(ok); status!.textContent = (ok ? form.dataset.sent : form.dataset.failed) ?? ''; };
+    try {
+      const body = new URLSearchParams(new FormData(form) as unknown as Record<string, string>).toString();
+      const res = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+      show(res.ok);
+      if (res.ok) form.reset();
+    } catch { show(false); }
+    button.disabled = false;
+  });
+</script>

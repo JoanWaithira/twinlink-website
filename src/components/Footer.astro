@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import logo from '../assets/twinlink-logo.png';
 import anbiLogo from '../assets/anbi-logo.png';
+import euFlag from '../assets/eu-flag.png';
 import Icon from './Icon.astro';
 import { nav, site } from '../content/site';
 import { themes } from '../content/catalog';
@@ -40,6 +41,7 @@ const year = new Date().getFullYear();
   <div class="container-site ftr__bottom">
     <p>© {year} twinlink.eu</p>
     <p class="ftr__anbi">
+      <Image src={euFlag} alt="Flag of the European Union" height={88} class="ftr__eu" loading="lazy" />
       <!-- ANBI status (Belastingdienst); the logo is the one used on the previous twinlink.eu site. -->
       <a href="https://anbi.belastingdienst.nl/" target="_blank" rel="noopener" class="ftr__anbi-logo" aria-label="ANBI: check our status in the Belastingdienst ANBI register"><Image src={anbiLogo} alt="ANBI – Algemeen Nut Beogende Instelling" width={120} loading="lazy" /></a>
       <span>Registered ANBI · KvK {site.org.kvk} · RSIN {site.org.rsin} · PIC {site.org.pic}</span>
@@ -62,6 +64,7 @@ const year = new Date().getFullYear();
   .ftr ul a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
   .ftr__addr { margin-top: 1.25rem; font-style: normal; font-size: 0.875rem; color: #b6c6dc; }
   .ftr__anbi { display: inline-flex; align-items: center; gap: 0.75rem; }
+  .ftr__eu { height: 2.75rem; width: auto; border-radius: 0.25rem; }
   .ftr__anbi-logo { display: inline-flex; flex: none; }
   .ftr__anbi-logo img { height: 2.75rem; width: auto; }
   .ftr__bottom { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; padding-block: 1.25rem 1.75rem; border-top: 1px solid rgb(255 255 255 / 0.1); font-size: 0.8125rem; color: #8fa3bf; }
