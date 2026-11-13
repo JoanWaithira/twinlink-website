@@ -362,6 +362,14 @@ const HERO_VIDEO = 'JFxr2k6DeDQ';
   .osdemo__points span { font-weight: 700; color: var(--color-navy); }
   .hero__grid { position: relative; display: grid; gap: 2.5rem; align-items: center; }
   @media (min-width: 64rem) { .hero__grid { grid-template-columns: minmax(0, 36rem); gap: 3rem; } .hero { padding-block: 3.5rem 6.5rem; } }
+  /* Wide screens: the film is 16:9. Let the hero grow towards that shape (up to one screen high) so
+     less of it is cropped, and anchor it at the top so the captions in the film stay in view. */
+  @media (min-width: 64rem) {
+    .hero { display: flex; align-items: center; min-height: min(calc(100svh - 4.75rem), 56.25vw); }
+    .hero > .hero__grid { width: 100%; }
+    .hero__film :global(video) { object-position: center top; }
+    .hero__film { background-position: center top; }
+  }
   .hero__title { margin-top: 1rem; }
   .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
   @media (max-width: 39.99rem) {
