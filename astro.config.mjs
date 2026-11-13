@@ -10,6 +10,12 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   build: { format: 'directory', inlineStylesheets: 'never' },
+  // Tools, projects and resources now share one page: /toolkit.
+  redirects: {
+    '/tools': '/toolkit?type=tool',
+    '/projects': '/toolkit?type=project',
+    '/resources': '/toolkit?type=resource',
+  },
   integrations: [sitemap()],
   vite: { plugins: [tailwindcss()] },
 });

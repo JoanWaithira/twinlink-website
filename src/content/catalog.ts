@@ -47,10 +47,10 @@ export interface Item {
 
 export const types: { id: ItemType; label: string; plural: string; href: string; icon: string; intro: string }[] = [
   { id: 'twin', label: 'Digital twin', plural: 'Digital twins', href: '/digital-twins', icon: 'twin', intro: 'Working prototypes. Open one and click around.' },
-  { id: 'tool', label: 'Tool', plural: 'Tools', href: '/tools', icon: 'tool', intro: 'Shortcuts, so the next project doesn’t begin with a blank page.' },
-  { id: 'project', label: 'Project', plural: 'Projects', href: '/projects', icon: 'project', intro: 'What is on the workbench right now.' },
+  { id: 'tool', label: 'Tool', plural: 'Tools', href: '/toolkit?type=tool', icon: 'tool', intro: 'Shortcuts, so the next project doesn’t begin with a blank page.' },
+  { id: 'project', label: 'Project', plural: 'Projects', href: '/toolkit?type=project', icon: 'project', intro: 'What is on the workbench right now.' },
   { id: 'knowledge', label: 'Knowledge', plural: 'Knowledge', href: '/knowledge', icon: 'knowledge', intro: 'Short reads and videos, written for people who decide, not only for engineers.' },
-  { id: 'resource', label: 'Resource', plural: 'Resources', href: '/resources', icon: 'resource', intro: 'The agreements that let one twin talk to another.' },
+  { id: 'resource', label: 'Resource', plural: 'Resources', href: '/toolkit?type=resource', icon: 'resource', intro: 'The agreements that let one twin talk to another.' },
 ];
 
 export const themes: { id: ThemeId; label: string; icon: string; intro: string; question: string }[] = [

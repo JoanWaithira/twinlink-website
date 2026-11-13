@@ -25,10 +25,8 @@ export const nav = [
   { label: 'Explore', href: '/explore' },
   { label: 'Digital twins', href: '/digital-twins' },
   { label: 'Geohub', href: '/geohub' },
-  { label: 'Tools', href: '/tools' },
-  { label: 'Projects', href: '/projects' },
+  { label: 'Toolkit', href: '/toolkit' }, // tools, projects and resources together
   { label: 'Knowledge', href: '/knowledge' },
-  { label: 'Resources', href: '/resources' },
   { label: 'Team', href: '/team' },
   { label: 'About', href: '/about' },
 ];
@@ -80,8 +78,8 @@ export const home = {
     ],
   },
   partners: {
-    eyebrow: 'Who we work with',
-    headline: 'Good company',
+    eyebrow: 'Our ecosystem',
+    headline: 'Partners and collaborators',
     // Logos: src/assets/partners/<logo> (taken from the current twinlink.eu site).
     items: [
       { name: 'University of Twente', role: 'Knowledge partner for geospatial innovation, digital twins and applied research.', logo: 'university-of-twente.svg', href: 'https://www.utwente.nl/' },
@@ -110,6 +108,13 @@ export const home = {
     body: 'Tell us about it. Cities, researchers and builders are all welcome.',
     cta: { label: 'Get in touch', href: '/contact' },
   },
+};
+
+export const toolkit = {
+  seo: { title: 'Toolkit | twinlink.eu', description: 'Tools, projects and resources for local digital twins, in one place.' },
+  eyebrow: 'Toolkit',
+  headline: 'Everything that helps you build the next twin.',
+  intro: 'Tools to start from, projects on the workbench, and the agreements that let one twin talk to another. Pick a shelf or search them all.',
 };
 
 export const about = {

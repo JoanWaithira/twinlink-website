@@ -7,12 +7,10 @@ import Search from '../components/Search.astro';
 import { home as h } from '../content/site';
 import { byTheme, byType, items, themes, types } from '../content/catalog';
 import { Image } from 'astro:assets';
+import { partnerLogo } from '../lib/partners';
 // Real screenshots of the live demos (src/assets/demos/).
 const shots = import.meta.glob<{ default: ImageMetadata }>('../assets/demos/*.png', { eager: true });
 const shotFor = (name?: string) => name ? Object.entries(shots).find(([p]) => p.endsWith(`/${name}.png`))?.[1].default : undefined;
-// Partner logos (src/assets/partners/).
-const partnerLogos = import.meta.glob<{ default: ImageMetadata }>('../assets/partners/*', { eager: true });
-const partnerLogo = (file?: string) => file ? Object.entries(partnerLogos).find(([p]) => p.endsWith(`/${file}`))?.[1].default : undefined;
 const demos = byType('twin').filter((d) => d.demo);
 // Our own films (public/media/), shown as silent loops; click for the full video.
 const filmOrder = ['data-space-and-data-labs', 'aadorp-energy-retrofit-dashboard', 'building-level-digital-twin', 'area-redesign-twin', 'wind-farm-twin', 'esdl-energy-system-editor'];

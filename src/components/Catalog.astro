@@ -4,8 +4,11 @@
 import ItemCard from './ItemCard.astro';
 import Icon from './Icon.astro';
 import { type Item, type ItemType, type ThemeId, themes, types } from '../content/catalog';
-interface Props { items: Item[]; fixedType?: ItemType; fixedTheme?: ThemeId }
-const { items, fixedType, fixedTheme } = Astro.props;
+// onlyTypes: show just these type switches (e.g. the Toolkit page: tools, projects, resources).
+interface Props { items: Item[]; fixedType?: ItemType; fixedTheme?: ThemeId; onlyTypes?: ItemType[] }
+const { items, fixedType, fixedTheme, onlyTypes } = Astro.props;
+const typeButtons = onlyTypes ? types.filter((t) => onlyTypes.includes(t.id)) : types;
+const countOf = (id: ItemType) => items.filter((i) => i.type === id).length;
 ---
 <div class="cat" data-catalog data-fixed-type={fixedType ?? ''} data-fixed-theme={fixedTheme ?? ''}>
   <div class="cat__bar">
@@ -17,7 +20,7 @@ const { items, fixedType, fixedTheme } = Astro.props;
     {!fixedType && (
       <div class="cat__group" role="group" aria-label="Type">
         <button type="button" data-cat-type="" aria-pressed="true">All</button>
-        {types.map((t) => <button type="button" data-cat-type={t.id} aria-pressed="false">{t.plural}</button>)}
+        {typeButtons.map((t) => <button type="button" data-cat-type={t.id} aria-pressed="false">{t.plural}{onlyTypes && <span class="cat__n">{countOf(t.id)}</span>}</button>)}
       </div>
     )}
     {!fixedTheme && (
